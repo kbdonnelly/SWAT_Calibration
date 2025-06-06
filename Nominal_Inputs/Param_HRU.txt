@@ -1,0 +1,5 @@
+           0.868    | ESCO : Soil evaporation compensation factor
+           0.026    | EPCO : Plant uptake compensation factor
+             1.0    | R2ADJ: Curve number retention parameter adjustment factor to adjust surface runoff for flat slopes
+           0.170    | OV_N : Manning's "n" value for overland flow
+            1000    | DEP_IMP : Depth to impervious layer in soil profile [mm]

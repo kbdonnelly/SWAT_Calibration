@@ -1,0 +1,2 @@
+    | CN2: Initial SCS CN II value
+    | BIOMIX: Biological mixing efficiency

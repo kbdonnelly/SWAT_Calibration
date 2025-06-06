@@ -1,0 +1,11 @@
+           4.000    | SURLAG : Surface runoff lag time [days]
+          -2.750    | SFTMP : Snowfall temperature
+           2.500    | SMTMP : Snow melt base temperature
+           0.350    | TIMP : Snow pack temperature lag factor
+           6.500    | SMFMX : Melt factor for snow on June 21
+           1.500    | SMFMN : Melt factor for snow on December 21
+           4.000    | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
+           0.650    | SNO50COV : Fraction of snow volume represented by SNOCOVMX that corresponds to 50% snow cover
+         400.000    | PHOSKD : Phosphorus soil partitioning coefficient
+          10.000    | PPERCO : Phosphorus percolation coefficient
+           0.050    | NPERCO : Nitrogen percolation coefficient
