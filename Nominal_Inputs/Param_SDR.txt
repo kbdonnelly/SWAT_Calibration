@@ -1,1 +1,1 @@
-      3.30    | LATKSATF: Multiplication factor to determine
+     1.697    | LATKSATF: Multiplication factor to determine

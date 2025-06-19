@@ -2,13 +2,13 @@
        1.0000000    | HRU_FR : Fraction of subbasin area contained in HRU
           91.463    | SLSUBBSN : Average slope length [m]
            0.043    | HRU_SLP : Average slope stepness [m/m]
-           0.170    | OV_N : Manning's "n" value for overland flow
+           0.385    | OV_N : Manning's "n" value for overland flow
            0.000    | LAT_TTIME : Lateral flow travel time [days]
            0.000    | LAT_SED : Sediment concentration in lateral flow and groundwater flow [mg/l]
            0.000    | SLSOIL : Slope length for lateral subsurface flow [m]
            0.000    | CANMX : Maximum canopy storage [mm]
-           0.868    | ESCO : Soil evaporation compensation factor
-           0.026    | EPCO : Plant uptake compensation factor
+           0.244    | ESCO : Soil evaporation compensation factor
+           0.517    | EPCO : Plant uptake compensation factor
            0.000    | RSDIN : Initial residue cover [kg/ha]
            0.000    | ERORGN : Organic N enrichment ratio
            0.000    | ERORGP : Organic P enrichment ratio
@@ -21,7 +21,7 @@ Special HRU: Pothole
            0.000    | POT_VOL : Initial volume of water stored in the pothole (depth [mm] over entire HRU)
            0.000    | POT_NSED : Normal sediment concentration in pothole [mg/l]
            0.000    | POT_NO3L : Nitrate decay rate in pothole [1/day]
-            1000    | DEP_IMP : Depth to impervious layer in soil profile [mm]
+        1028.937    | DEP_IMP : Depth to impervious layer in soil profile [mm]
 
 
 
@@ -42,4 +42,4 @@ Special HRU: Pothole
              2.0    | N_LN: Power function exponent for calculating nitrate concentration in subsurface drains
              2.0    | N_LNCO: Coefficient for power function for calculating nitrate concentration in subsurface drains
              2.0    | SURLAG: Surface runoff lag time in the HRU (days)
-             1.0    | R2ADJ: Curve number retention parameter adjustment factor to adjust surface runoff for flat slopes
+           0.984    | R2ADJ: Curve number retention parameter adjustment factor to adjust surface runoff for flat slopes

@@ -4,7 +4,7 @@ Wrapper for Executing SWAT+ Model
 
 Adapated from Jaya Hafner, Kalcic Lab @ UW Madison
 
-Last updated: 05/07/2025
+Last updated: 06/19/2025
 
 @author: kbdon
 """
@@ -239,9 +239,9 @@ class SWATrun():
         InputPath_sol = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + sol_name + ".sol"
         
         
-        theta_ANION = theta[1+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
+        theta_ANION = theta[len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
         theta_ANION = f'{theta_ANION:.3f}'
-        theta_CRK = theta[2+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
+        theta_CRK = theta[1+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
         theta_CRK = f'{theta_CRK:.3f}'
         
         theta_KSAT = [None]*6
@@ -249,11 +249,11 @@ class SWATrun():
         theta_AWC = [None]*6
         
         for i in range(6):
-            theta_KSAT[i] = theta[3+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
+            theta_KSAT[i] = theta[2+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
             theta_KSAT[i] = f'{theta_KSAT[i]:.2f}'
-            theta_BD[i] = theta[8+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
+            theta_BD[i] = theta[7+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
             theta_BD[i] = f'{theta_BD[i]:.2f}'
-            theta_AWC[i] = theta[14+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)+ i].squeeze(0).tolist()
+            theta_AWC[i] = theta[13+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)+ i].squeeze(0).tolist()
             theta_AWC[i] = f'{theta_AWC[i]:.2f}'
         
         new_line_ANION = pd.read_csv(self.SOL_iter_path, header=None).loc[0].to_string(index=False) + theta_ANION
@@ -327,15 +327,181 @@ class SWATrun():
 
 if __name__== '__main__':
     a = SWATrun()
+    dim = 39
+    run_type = ['Rand'] # Types accepted: ['Rand','Input']
     
-    theta = torch.rand(len(a.param_list))
+    plotting = False # Option for turning plotting on/off
     
-    # Rescaling:
-    LB = a.LB
-    UB = a.UB
+    if run_type == ['Rand']:
+        theta = torch.rand(len(a.param_list))
+        print(theta)
     
-    theta_scaled = LB + (UB - LB)*theta
-    sensors_alldates = a.model_run(theta_scaled)
+        # Rescaling:
+        LB = a.LB
+        UB = a.UB
+    
+        theta_scaled = LB + (UB - LB)*theta
+        sensors = a.model_run(theta_scaled)
+        
+    if run_type == ['Input']:
+        
+        # Rescaling:
+        LB = a.LB
+        UB = a.UB
+        
+        theta = torch.tensor(pd.read_csv('Sobol_Evaluation/df_theta.csv').to_numpy())
+        output = torch.tensor(pd.read_csv('Sobol_Evaluation/df_output.csv').to_numpy())
+        
+        theta_best = theta[torch.argmin(torch.sum(output,dim=1))]
+        
+        theta_best_scaled = LB + (UB - LB)*theta_best
+        
+        sensors = a.model_run(theta_best)
+        
+    if plotting == True:    
+
+        import matplotlib.pyplot as plt
+        import matplotlib.dates as mdates
+        import datetime  
+            
+        # Calibration Plots
+        
+        start_tr_date = datetime.date(2020,1,1)
+        end_tr_date = datetime.date(2023,12,31)
+        all_dates = [start_tr_date + datetime.timedelta(days=i) for i in range((end_tr_date - start_tr_date).days + 1)]
+        
+        # Sensors 1 & 2:
+        fig, ax = plt.subplots(2,1, figsize=(24, 12))
+        ax[0].plot(all_dates, sensors[:,0], color='b', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,0],marker="x",linestyle="none",c='g')
+        ax[0].set_ylabel("Tile Flow (mm)", fontsize = 16)
+        ax[0].set_xlabel("Date", fontsize = 16)
+        ax[0].set_xlim(start_tr_date, end_tr_date)
+        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].grid(True)
+        
+        ax[1].plot(all_dates[0:1096], sensors[:,1][0:1096], color='b', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,1],marker="x",linestyle="none",c='g')
+        ax[1].set_ylabel("Surface Flow (mm)", fontsize = 16)
+        ax[1].set_xlabel("Date", fontsize = 16)
+        ax[1].set_xlim(start_tr_date, end_tr_date)
+        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].grid(True)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        # Sensors 3 & 4:
+        fig, ax = plt.subplots(2,1, figsize=(24, 12))
+        ax[0].plot(all_dates, sensors[:,2], color='b', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,2],marker="x",linestyle="none",c='g')
+        ax[0].set_ylabel("Tile P (g/ha)", fontsize = 16)
+        ax[0].set_xlabel("Date", fontsize = 16)
+        ax[0].set_xlim(start_tr_date, end_tr_date)
+        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].grid(True)
+        
+        ax[1].plot(all_dates, sensors[:,3], color='b', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,3],marker="x",linestyle="none",c='g')
+        ax[1].set_ylabel("Surface P (g/ha)", fontsize = 16)
+        ax[1].set_xlabel("Date", fontsize = 16)
+        ax[1].set_xlim(start_tr_date, end_tr_date)
+        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].grid(True)
+        
+        plt.tight_layout()
+        plt.show()
+                
+        # Sensors 5 & 6:
+        fig, ax = plt.subplots(2,1, figsize=(24, 12))
+        ax[0].plot(all_dates, sensors[:,4], color='b', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
+        ax[0].set_ylabel("Tile NO3 (kg/ha)", fontsize = 16)
+        ax[0].set_xlabel("Date", fontsize = 16)
+        ax[0].set_xlim(start_tr_date, end_tr_date)
+        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].grid(True)
+        
+        ax[1].plot(all_dates, sensors[:,5], color='b', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,5],marker="x",linestyle="none",c='g')
+        ax[1].set_ylabel("Surface NO3 (kg/ha)", fontsize = 16)
+        ax[1].set_xlabel("Date", fontsize = 16)
+        ax[1].set_xlim(start_tr_date, end_tr_date)
+        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].grid(True)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        # Sensors 7,8,9:
+        fig, ax = plt.subplots(3,1, figsize=(24, 12))
+        ax[0].plot(all_dates, sensors[:,6], color='b', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,6],marker="x",linestyle="none",c='g')
+        ax[0].set_ylabel("VWC - 10 cm", fontsize = 16)
+        ax[0].set_xlabel("Date", fontsize = 16)
+        ax[0].set_xlim(start_tr_date, end_tr_date)
+        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].grid(True)
+        
+        ax[1].plot(all_dates, sensors[:,7], color='b', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,7],marker="x",linestyle="none",c='g')
+        ax[1].set_ylabel("VWC - 20 cm", fontsize = 16)
+        ax[1].set_xlabel("Date", fontsize = 16)
+        ax[1].set_xlim(start_tr_date, end_tr_date)
+        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].grid(True)
+        
+        ax[2].plot(all_dates, sensors[:,8], color='b', lw=3)
+        ax[2].plot(all_dates, a.ground_truth[:,8],marker="x",linestyle="none",c='g')
+        ax[2].set_ylabel("VWC - 50 cm", fontsize = 16)
+        ax[2].set_xlabel("Date", fontsize = 16)
+        ax[2].set_xlim(start_tr_date, end_tr_date)
+        ax[2].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[2].tick_params(axis='both', labelsize=16)
+        ax[2].grid(True)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        # Sensors 10,11,12:
+        fig, ax = plt.subplots(3,1, figsize=(24, 12))
+        ax[0].plot(all_dates, sensors[:,9], color='b', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,9],marker="x",linestyle="none",c='g')
+        ax[0].set_ylabel("TMP - 10 cm", fontsize = 16)
+        ax[0].set_xlabel("Date", fontsize = 16)
+        ax[0].set_xlim(start_tr_date, end_tr_date)
+        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].grid(True)
+        
+        ax[1].plot(all_dates, sensors[:,10], color='b', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,10],marker="x",linestyle="none",c='g')
+        ax[1].set_ylabel("TMP - 20 cm", fontsize = 16)
+        ax[1].set_xlabel("Date", fontsize = 16)
+        ax[1].set_xlim(start_tr_date, end_tr_date)
+        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].grid(True)
+        
+        ax[2].plot(all_dates, sensors[:,11], color='b', lw=3)
+        ax[2].plot(all_dates, a.ground_truth[:,11],marker="x",linestyle="none",c='g')
+        ax[2].set_ylabel("TMP - 50 cm", fontsize = 16)
+        ax[2].set_xlabel("Date", fontsize = 16)
+        ax[2].set_xlim(start_tr_date, end_tr_date)
+        ax[2].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[2].tick_params(axis='both', labelsize=16)
+        ax[2].grid(True)
+        
+        plt.tight_layout()
+        plt.show()
     
     
 
