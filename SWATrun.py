@@ -47,6 +47,12 @@ class SWATrun():
                           ("PHOSKD.bsn", 250, 400),
                           ("PPERCO.bsn", 10, 17.5),
                           ("NPERCO.bsn", 0.01, 1)]
+        self.param_gw = [("GW_DELAY.gw",5,50),
+                         ("ALPHA.BF.gw",0.1,1),
+                         ("GWQMN.gw",500,1500),
+                         ("GW_REVAP.gw",0.02,0.2),
+                         ("REVAPMN.gw",600,1000),
+                         ("RCHRG_DP.gw",0,1)]
         self.param_hru = [("ESCO.hru", 0.001, 1),
                           ("EPCO.hru", 0, 1),
                           ("R2ADJ.hru", 0.6, 1),
@@ -76,7 +82,7 @@ class SWATrun():
                           ("SOL_AWC(5).sol", 0.2, 0.4),
                           ("SOL_AWC(6).sol", 0.2, 0.4)]
                       
-        self.param_list = self.param_bsn + self.param_hru + self.param_mgt + self.param_sdr + self.param_sol
+        self.param_list = self.param_bsn + self.param_gw + self.param_hru + self.param_mgt + self.param_sdr + self.param_sol
         self.theta_dim = len(self.param_list)
         self.df_param = pd.DataFrame(self.param_list,columns=["parameter","LB","UB"])
         self.LB = torch.tensor(self.df_param.iloc[:,1].tolist())
@@ -85,7 +91,7 @@ class SWATrun():
         # Specifying ground truth data:
         df1 = pd.read_csv('obtileQ_KD.csv')
         self.dates = pd.date_range(start=f"1/1/2020", periods = 1461).strftime("%m/%d/%Y")
-        self.ground_truth = torch.tensor(df1.iloc[:,1:13].to_numpy())
+        self.ground_truth = torch.tensor(df1.iloc[:,1:14].to_numpy())
         
                       
         # Define paths to input, output, and executable:
@@ -104,6 +110,7 @@ class SWATrun():
         
         # Nominal parameters path to search inputs files for:
         self.BSN_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_BSN.txt"
+        self.GW_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_GW.txt"
         self.HRU_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_HRU.txt"
         self.MGT_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_MGT.txt"
         self.SDR_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_SDR.txt"
@@ -111,6 +118,7 @@ class SWATrun():
         
         # Parameter iteration files to add new thetas to:
         self.BSN_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_BSN.txt"
+        self.GW_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_GW.txt"        
         self.HRU_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_HRU.txt"
         self.MGT_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_MGT.txt"
         self.SDR_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_SDR.txt"
@@ -147,7 +155,35 @@ class SWATrun():
         with open(InputPath_bsn, 'w') as file1:  # Write the file out again
             file1.write(filedata1)
         file1.close()
-                
+        
+        # GW file:
+        # Create input file with new BSN parameters:    
+        gw_name = '000010001'
+        DefaultPath_gw = "C:\\SWAT_Calibration\\Nominal_Input_Files\\000010001.gw"
+        InputPath_gw = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + gw_name + ".gw"
+        
+        old_line_gw = [None]*len(self.param_gw)
+        new_line_gw = [None]*len(self.param_gw)
+            
+        for i in range(len(self.param_gw)):
+            theta_str = theta[i + len(self.param_bsn)].squeeze(0).tolist()
+            theta_str = f'{theta_str:.4f}'
+            new_line_gw[i] = theta_str.rjust(16) + pd.read_csv(self.GW_iter_path, header=None).loc[i].to_string(index=False)
+            old_line_gw[i] = pd.read_csv(self.GW_nom_path, header=None).loc[i].to_string(index=False)
+            
+        shutil.copy(DefaultPath_gw, InputPath_gw)
+        with open(InputPath_gw, 'r') as file2:  # Read in the .bsn file
+            filedata2 = file2.read()     
+        
+        # Finds old line in .bsn file, replaces it with new theta:
+        for i in range(len(self.param_gw)):    
+            filedata2 = filedata2.replace(old_line_gw[i], new_line_gw[i])
+        
+        with open(InputPath_gw, 'w') as file2:  # Write the file out again
+            file2.write(filedata2)
+        file2.close()
+
+        
         # HRU file:
         # Create input file with new HRU parameters:    
         hru_name = '000010001'
@@ -158,22 +194,22 @@ class SWATrun():
         new_line_hru = [None]*len(self.param_hru)
             
         for i in range(len(self.param_hru)):
-            theta_str = theta[i+len(self.param_bsn)].squeeze(0).tolist()
+            theta_str = theta[i+len(self.param_bsn)+len(self.param_gw)].squeeze(0).tolist()
             theta_str = f'{theta_str:.3f}'
             new_line_hru[i] = theta_str.rjust(16) + pd.read_csv(self.HRU_iter_path, header=None).loc[i].to_string(index=False)
             old_line_hru[i] = pd.read_csv(self.HRU_nom_path, header=None).loc[i].to_string(index=False)
             
         shutil.copy(DefaultPath_hru, InputPath_hru)
-        with open(InputPath_hru, 'r') as file2:  # Read in the .hru file
-            filedata2 = file2.read()     
+        with open(InputPath_hru, 'r') as file3:  # Read in the .hru file
+            filedata3 = file3.read()     
         
         # Finds old line in .hru file, replaces it with new theta:
         for i in range(len(self.param_hru)):    
-            filedata2 = filedata2.replace(old_line_hru[i], new_line_hru[i])
+            filedata3 = filedata3.replace(old_line_hru[i], new_line_hru[i])
         
-        with open(InputPath_hru, 'w') as file2:  # Write the file out again
-            file2.write(filedata2)
-        file2.close()                
+        with open(InputPath_hru, 'w') as file3:  # Write the file out again
+            file3.write(filedata3)
+        file3.close()                
 
         # MGT file:
         # Create input file with new MGT parameters:    
@@ -185,22 +221,22 @@ class SWATrun():
         new_line_mgt = [None]*len(self.param_mgt)
             
         for i in range(len(self.param_mgt)):
-            theta_str = theta[i+len(self.param_bsn)+len(self.param_hru)].squeeze(0).tolist()
+            theta_str = theta[i+len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)].squeeze(0).tolist()
             theta_str = f'{theta_str:.3f}'
             new_line_mgt[i] = theta_str.rjust(16) + pd.read_csv(self.MGT_iter_path, header=None).loc[i].to_string(index=False)
             old_line_mgt[i] = pd.read_csv(self.MGT_nom_path, header=None).loc[i].to_string(index=False)
             
         shutil.copy(DefaultPath_mgt, InputPath_mgt)
-        with open(InputPath_mgt, 'r') as file3:  # Read in the .mgt file
-            filedata3 = file3.read()     
+        with open(InputPath_mgt, 'r') as file4:  # Read in the .mgt file
+            filedata4 = file4.read()     
         
         # Finds old line in .mgt file, replaces it with new theta:
         for i in range(len(self.param_mgt)):    
-            filedata3 = filedata3.replace(old_line_mgt[i], new_line_mgt[i])
+            filedata4 = filedata4.replace(old_line_mgt[i], new_line_mgt[i])
         
-        with open(InputPath_mgt, 'w') as file3:  # Write the file out again
-            file3.write(filedata3)
-        file3.close()  
+        with open(InputPath_mgt, 'w') as file4:  # Write the file out again
+            file4.write(filedata4)
+        file4.close()  
         
         # SDR file:
         # Create input file with new SDR parameters:    
@@ -212,22 +248,22 @@ class SWATrun():
         new_line_sdr = [None]*len(self.param_sdr)
             
         for i in range(len(self.param_sdr)):
-            theta_str = theta[i+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)].squeeze(0).tolist()
+            theta_str = theta[i+len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)+len(self.param_mgt)].squeeze(0).tolist()
             theta_str = f'{theta_str:.3f}'
             new_line_sdr[i] = theta_str.rjust(10) + pd.read_csv(self.SDR_iter_path, header=None).loc[i].to_string(index=False)
             old_line_sdr[i] = pd.read_csv(self.SDR_nom_path, header=None).loc[i].to_string(index=False)
             
         shutil.copy(DefaultPath_sdr, InputPath_sdr)
-        with open(InputPath_sdr, 'r') as file4:  # Read in the .sdr file
-            filedata4 = file4.read()     
+        with open(InputPath_sdr, 'r') as file5:  # Read in the .sdr file
+            filedata5 = file5.read()     
         
         # Finds old line in .sdr file, replaces it with new theta:
         for i in range(len(self.param_sdr)):    
-            filedata4 = filedata4.replace(old_line_sdr[i], new_line_sdr[i])
+            filedata5 = filedata5.replace(old_line_sdr[i], new_line_sdr[i])
         
-        with open(InputPath_sdr, 'w') as file4:  # Write the file out again
-            file4.write(filedata4)
-        file4.close()  
+        with open(InputPath_sdr, 'w') as file5:  # Write the file out again
+            file5.write(filedata5)
+        file5.close()  
         
         #######################################################################
         # Next, for the .sol file, we need to treat theta differently, as some 
@@ -239,9 +275,9 @@ class SWATrun():
         InputPath_sol = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + sol_name + ".sol"
         
         
-        theta_ANION = theta[len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
+        theta_ANION = theta[len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
         theta_ANION = f'{theta_ANION:.3f}'
-        theta_CRK = theta[1+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
+        theta_CRK = theta[1+len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
         theta_CRK = f'{theta_CRK:.3f}'
         
         theta_KSAT = [None]*6
@@ -249,11 +285,11 @@ class SWATrun():
         theta_AWC = [None]*6
         
         for i in range(6):
-            theta_KSAT[i] = theta[2+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
+            theta_KSAT[i] = theta[2+len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
             theta_KSAT[i] = f'{theta_KSAT[i]:.2f}'
-            theta_BD[i] = theta[7+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
+            theta_BD[i] = theta[8+len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr) + i].squeeze(0).tolist()
             theta_BD[i] = f'{theta_BD[i]:.2f}'
-            theta_AWC[i] = theta[13+len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)+ i].squeeze(0).tolist()
+            theta_AWC[i] = theta[14+len(self.param_bsn)+len(self.param_gw)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)+ i].squeeze(0).tolist()
             theta_AWC[i] = f'{theta_AWC[i]:.2f}'
         
         new_line_ANION = pd.read_csv(self.SOL_iter_path, header=None).loc[0].to_string(index=False) + theta_ANION
@@ -270,20 +306,20 @@ class SWATrun():
         
         
         shutil.copy(DefaultPath_sol, InputPath_sol)
-        with open(InputPath_sol, 'r') as file5:  # Read in the .sol file
-            filedata5 = file5.read() 
+        with open(InputPath_sol, 'r') as file6:  # Read in the .sol file
+            filedata6 = file6.read() 
         
         # Find old lines in .sol file, replaces it with new theta:
  
-        filedata5 = filedata5.replace(old_line_ANION, new_line_ANION)
-        filedata5 = filedata5.replace(old_line_CRK, new_line_CRK)
-        filedata5 = filedata5.replace(old_line_KSAT, new_line_KSAT)
-        filedata5 = filedata5.replace(old_line_BD, new_line_BD)
-        filedata5 = filedata5.replace(old_line_AWC, new_line_AWC)
+        filedata6 = filedata6.replace(old_line_ANION, new_line_ANION)
+        filedata6 = filedata6.replace(old_line_CRK, new_line_CRK)
+        filedata6 = filedata6.replace(old_line_KSAT, new_line_KSAT)
+        filedata6 = filedata6.replace(old_line_BD, new_line_BD)
+        filedata6 = filedata6.replace(old_line_AWC, new_line_AWC)
         
-        with open(InputPath_sol, 'w') as file5:  # Write the file out again
-            file5.write(filedata5)
-        file5.close() 
+        with open(InputPath_sol, 'w') as file6:  # Write the file out again
+            file6.write(filedata6)
+        file6.close() 
          
         #######################################################################
         # Executing SWAT run
@@ -306,6 +342,7 @@ class SWATrun():
         self.hru = pd.read_fwf(self.output_hru, skiprows=8)
                 
         SURQ = torch.tensor(self.hru.to_numpy()[:,22].astype(float))[1461:2992]
+        self.WATTBL = torch.tensor(self.hru.to_numpy()[:,37].astype(float))[1461:2992] # Defining this with self to plot all values later
         QTILE = torch.tensor(self.hru.to_numpy()[:,38].astype(float))[1461:2992]
         self.STMP10 = torch.tensor(self.hru.to_numpy()[:,39].astype(float))[1461:2992] # Defining this with self to plot all values later
         self.STMP20 = torch.tensor(self.hru.to_numpy()[:,40].astype(float))[1461:2992] # Defining this with self to plot all values later
@@ -320,21 +357,22 @@ class SWATrun():
         
         # Stacking outputs in order as seen in obtileQ:
             
-        sensors = torch.stack([QTILE,SURQ,TILEP,SURP,TILENO3,SURNO3,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50],dim=1)
-                 
+        # sensors = torch.stack([QTILE,SURQ,TILEP,SURP,TILENO3,SURNO3,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)
+        sensors = torch.stack([QTILE,SURQ,TILEP,SURP,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)    
+
+             
         return sensors
 
 
 if __name__== '__main__':
     a = SWATrun()
-    dim = 39
-    run_type = ['Rand'] # Types accepted: ['Rand','Input']
+    dim = a.theta_dim
+    run_type = ['Input'] # Types accepted: ['Rand','Input']
     
-    plotting = False # Option for turning plotting on/off
+    plotting = True # Option for turning plotting on/off
     
     if run_type == ['Rand']:
-        theta = torch.rand(len(a.param_list))
-        print(theta)
+        theta = torch.rand(dim)
     
         # Rescaling:
         LB = a.LB
@@ -349,14 +387,24 @@ if __name__== '__main__':
         LB = a.LB
         UB = a.UB
         
-        theta = torch.tensor(pd.read_csv('Sobol_Evaluation/df_theta.csv').to_numpy())
-        output = torch.tensor(pd.read_csv('Sobol_Evaluation/df_output.csv').to_numpy())
+        theta = torch.tensor([0.45480903, 0.58425789, 0.86832776, 0.83128568, 0.71584697, 0.14597437,
+         0.860806,   0.62389545, 0.59600266, 0.08735674, 0.62754144, 0.23379524,
+         0.33231065, 0.39901562, 0.5890775,  0.20780471, 0.11828673, 0.39035824,
+         0.62171181, 0.15289001, 0.97431663, 0.93883756, 0.51791812, 0.43330103,
+         0.50191594, 0.94546279, 0.48925108, 0.49790838, 0.81539313, 0.56811724,
+         0.47911766, 0.6779404,  0.64400814, 0.75145728, 0.88567581, 0.88905739,
+         0.65781362, 0.39644874, 0.41579915, 0.24462565, 0.72021364, 0.13691468,
+         0.07436978, 0.53499743, 0.28492319])
+
+        theta_scaled = LB + (UB - LB)*theta
         
-        theta_best = theta[torch.argmin(torch.sum(output,dim=1))]
+        sensors = a.model_run(theta_scaled)
         
-        theta_best_scaled = LB + (UB - LB)*theta_best
-        
-        sensors = a.model_run(theta_best)
+        df = pd.DataFrame(a.param_list)
+        df.to_csv('SingleFieldSWAT_0624.csv', index=False)
+        df1 = pd.DataFrame(theta_scaled.numpy())
+        df1.to_csv('parameters.csv', index=False)
+                                
         
     if plotting == True:    
 
@@ -377,7 +425,7 @@ if __name__== '__main__':
         ax[0].set_ylabel("Tile Flow (mm)", fontsize = 16)
         ax[0].set_xlabel("Date", fontsize = 16)
         ax[0].set_xlim(start_tr_date, end_tr_date)
-        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[0].tick_params(axis='both', labelsize=16)
         ax[0].grid(True)
         
@@ -386,7 +434,7 @@ if __name__== '__main__':
         ax[1].set_ylabel("Surface Flow (mm)", fontsize = 16)
         ax[1].set_xlabel("Date", fontsize = 16)
         ax[1].set_xlim(start_tr_date, end_tr_date)
-        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[1].tick_params(axis='both', labelsize=16)
         ax[1].grid(True)
         
@@ -400,7 +448,7 @@ if __name__== '__main__':
         ax[0].set_ylabel("Tile P (g/ha)", fontsize = 16)
         ax[0].set_xlabel("Date", fontsize = 16)
         ax[0].set_xlim(start_tr_date, end_tr_date)
-        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[0].tick_params(axis='both', labelsize=16)
         ax[0].grid(True)
         
@@ -409,14 +457,14 @@ if __name__== '__main__':
         ax[1].set_ylabel("Surface P (g/ha)", fontsize = 16)
         ax[1].set_xlabel("Date", fontsize = 16)
         ax[1].set_xlim(start_tr_date, end_tr_date)
-        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[1].tick_params(axis='both', labelsize=16)
         ax[1].grid(True)
         
         plt.tight_layout()
         plt.show()
                 
-        # Sensors 5 & 6:
+        # # Sensors 5 & 6:
         fig, ax = plt.subplots(2,1, figsize=(24, 12))
         ax[0].plot(all_dates, sensors[:,4], color='b', lw=3)
         ax[0].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
@@ -446,7 +494,7 @@ if __name__== '__main__':
         ax[0].set_ylabel("VWC - 10 cm", fontsize = 16)
         ax[0].set_xlabel("Date", fontsize = 16)
         ax[0].set_xlim(start_tr_date, end_tr_date)
-        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[0].tick_params(axis='both', labelsize=16)
         ax[0].grid(True)
         
@@ -455,7 +503,7 @@ if __name__== '__main__':
         ax[1].set_ylabel("VWC - 20 cm", fontsize = 16)
         ax[1].set_xlabel("Date", fontsize = 16)
         ax[1].set_xlim(start_tr_date, end_tr_date)
-        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[1].tick_params(axis='both', labelsize=16)
         ax[1].grid(True)
         
@@ -464,7 +512,7 @@ if __name__== '__main__':
         ax[2].set_ylabel("VWC - 50 cm", fontsize = 16)
         ax[2].set_xlabel("Date", fontsize = 16)
         ax[2].set_xlim(start_tr_date, end_tr_date)
-        ax[2].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[2].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[2].tick_params(axis='both', labelsize=16)
         ax[2].grid(True)
         
@@ -478,7 +526,7 @@ if __name__== '__main__':
         ax[0].set_ylabel("TMP - 10 cm", fontsize = 16)
         ax[0].set_xlabel("Date", fontsize = 16)
         ax[0].set_xlim(start_tr_date, end_tr_date)
-        ax[0].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[0].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[0].tick_params(axis='both', labelsize=16)
         ax[0].grid(True)
         
@@ -487,7 +535,7 @@ if __name__== '__main__':
         ax[1].set_ylabel("TMP - 20 cm", fontsize = 16)
         ax[1].set_xlabel("Date", fontsize = 16)
         ax[1].set_xlim(start_tr_date, end_tr_date)
-        ax[1].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[1].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[1].tick_params(axis='both', labelsize=16)
         ax[1].grid(True)
         
@@ -496,7 +544,7 @@ if __name__== '__main__':
         ax[2].set_ylabel("TMP - 50 cm", fontsize = 16)
         ax[2].set_xlabel("Date", fontsize = 16)
         ax[2].set_xlim(start_tr_date, end_tr_date)
-        ax[2].legend(['Sobol','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
+        ax[2].legend(['L-BFGS-B','Ground Truth'],loc='upper center',fontsize=16, ncol=2) 
         ax[2].tick_params(axis='both', labelsize=16)
         ax[2].grid(True)
         
