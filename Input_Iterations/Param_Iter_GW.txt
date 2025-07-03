@@ -1,0 +1,6 @@
+    | GW_DELAY : Groundwater delay [days]
+    | ALPHA_BF : Baseflow alpha factor [days]
+    | GWQMN : Threshold depth of water in the shallow aquifer required for return flow to occur [mm]
+    | GW_REVAP : Groundwater "revap" coefficient
+    | REVAPMN: Threshold depth of water in the shallow aquifer for "revap" to occur [mm]
+    | RCHRG_DP : Deep aquifer percolation fraction
