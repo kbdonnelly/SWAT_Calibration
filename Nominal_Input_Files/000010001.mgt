@@ -7,7 +7,7 @@ Initial Plant Growth Parameters
             0.00    | BIO_INIT: Initial biomass (kg/ha) (IGRO = 1)
             0.00    | PHU_PLT: Number of heat units to bring plant to maturity (IGRO = 1)
 General Management Parameters
-           0.202    | BIOMIX: Biological mixing efficiency
+           0.200    | BIOMIX: Biological mixing efficiency
           91.425    | CN2: Initial SCS CN II value
             1.00    | USLE_P: USLE support practice factor
             0.00    | BIO_MIN: Minimum biomass for grazing (kg/ha)

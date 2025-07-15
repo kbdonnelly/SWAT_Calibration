@@ -1,2 +1,1 @@
           91.425    | CN2: Initial SCS CN II value
-           0.202    | BIOMIX: Biological mixing efficiency

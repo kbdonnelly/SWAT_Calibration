@@ -17,7 +17,7 @@ Water Balance:
 Surface Runoff:
                0    | IEVENT: rainfall/runoff code: 0=daily rainfall/CN
                1    | ICRK: crack flow code: 1=model crack flow in soil
-           1.553    | SURLAG : Surface runoff lag time [days]
+           4.000    | SURLAG : Surface runoff lag time [days]
            1.000    | ADJ_PKR : Peak rate adjustment factor for sediment routing in the subbasin (tributary channels)
            1.000    | PRF_BSN : Peak rate adjustment factor for sediment routing in the main channel
           0.0001    | SPCON : Linear parameter for calculating the maximum amount of sediment that can be reentrained during channel sediment routing
@@ -27,9 +27,9 @@ Nutrient Cycling:
          0.00030    | CMN : Rate factor for humus mineralization of active organic nitrogen
           20.000    | N_UPDIS : Nitrogen uptake distribution parameter
           20.000    | P_UPDIS : Phosphorus uptake distribution parameter
-           0.797    | NPERCO : Nitrogen percolation coefficient
-          16.219    | PPERCO : Phosphorus percolation coefficient
-         319.134    | PHOSKD : Phosphorus soil partitioning coefficient
+           0.200    | NPERCO : Nitrogen percolation coefficient
+          10.000    | PPERCO : Phosphorus percolation coefficient
+         300.000    | PHOSKD : Phosphorus soil partitioning coefficient
            0.400    | PSP : Phosphorus sorption coefficient
            0.050    | RSDCO : Residue decomposition coefficient
 Pesticide Cycling:

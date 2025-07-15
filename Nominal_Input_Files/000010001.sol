@@ -2,17 +2,17 @@
  Soil Name: Blount
  Soil Hydrologic Group: D
  Maximum rooting depth(mm): 2000.00
- Porosity fraction from which anions are excluded:0.344
+ Porosity fraction from which anions are excluded:0.500
  Crack volume potential of soil:22.533
  Texture 1                : SIL- SIC- CL- CL
  Depth                [mm]:       50.80      152.40      250.00      830.00      990.00     2000.00
- Bulk Density Moist [g/cc]:        0.98        1.16        1.47        1.51        1.57        1.59
- Ave. AW Incl. Rock Frag  :        0.27        0.37        0.39        0.11        0.20        0.33
- Ksat. (est.)      [mm/hr]:       22.23       22.79       22.33       21.70        9.17        0.98
+ Bulk Density Moist [g/cc]:        1.11        1.11        1.25        1.26        1.80        1.90
+ Ave. AW Incl. Rock Frag  :        0.24        0.24        0.32        0.23        0.12        0.30
+ Ksat. (est.)      [mm/hr]:       20.32       20.32       20.32       20.32       20.32        2.66
  Organic Carbon [weight %]:        1.92        1.34        1.16        0.50        0.25        0.25
- Clay           [weight %]:       22.00       22.00       22.00       30.00       35.00       33.00
- Silt           [weight %]:       56.00       56.00       56.00       47.00       40.00       45.00
- Sand           [weight %]:       22.00       22.00       22.00       23.00       25.00       22.00
+ Clay           [weight %]:       22.00       22.00       22.00       42.00       35.00       33.00
+ Silt           [weight %]:       56.00       56.00       56.00       42.00       40.00       45.00
+ Sand           [weight %]:       22.00       22.00       22.00       16.00       25.00       22.00
  Rock Fragments   [vol. %]:        5.00        5.00        5.00        5.00        1.00        2.00
  Soil Albedo (Moist)      :        0.29        0.29        0.29        0.29        0.29        0.29
  Erosion K                :        0.37        0.37        0.37        0.32        0.37        0.37

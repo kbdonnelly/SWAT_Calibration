@@ -1,5 +1,1 @@
- Porosity fraction from which anions are excluded:0.344
  Crack volume potential of soil:22.533
- Ksat. (est.)      [mm/hr]:       22.23       22.79       22.33       21.70        9.17        0.98
- Bulk Density Moist [g/cc]:        0.98        1.16        1.47        1.51        1.57        1.59
- Ave. AW Incl. Rock Frag  :        0.27        0.37        0.39        0.11        0.20        0.33
