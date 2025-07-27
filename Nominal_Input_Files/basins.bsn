@@ -122,6 +122,7 @@ Subdaily Erosion:
             1.00    | LATKSATF_BSN: Multiplication factor to determine lateral ksat from SWAT ksat input value for HRU
                1    | ITDRN: Tile drainage equations flag
                2    | IWTDN: Water table depth algorithms flag
+               1    | SWATFT: Soil temperature module (0:previous module, 1: Qi et al. (2016) FT module)
                0    | SOL_P_MODEL: if = 0, use new soil P model
             1.00    | IABSTR: Initial abstraction on impervious cover (mm)
                0    | IATMODEP: 0 = average annual inputs 1 = monthly inputs

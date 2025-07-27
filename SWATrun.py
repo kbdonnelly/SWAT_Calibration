@@ -4,7 +4,7 @@ Wrapper for Executing SWAT+ Model
 
 Adapated from Jaya Hafner, Kalcic Lab @ UW Madison
 
-Last updated: 07/01/2025
+Last updated: 07/21/2025
 
 @author: kbdon
 """
@@ -47,7 +47,7 @@ class SWATrun:
                           ("EPCO.hru", 0, 1),
                           ("R2ADJ.hru", 0, 1),
                           ("OV_N.hru", 0.05, 0.5),
-                          ("DEP_IMP.hru", 1000, 2500)]
+                          ("DEP_IMP.hru", 1524, 2500)]
         self.param_mgt = [("CN2.mgt", 84, 94)]
         self.param_sdr = [("LATKSATF.sdr", 1, 4)]             
         self.param_sol = [("SOL_CRK.sol", 0, 0.5)]
@@ -254,7 +254,7 @@ class SWATrun:
         
         self.hru = pd.read_fwf(self.output_hru, skiprows=8)
                 
-        SURQ = torch.tensor(self.hru.to_numpy()[:,22].astype(float))[1461:2992]
+        #SURQ = torch.tensor(self.hru.to_numpy()[:,22].astype(float))[1461:2992]
         self.WATTBL = torch.tensor(self.hru.to_numpy()[:,37].astype(float))[1461:2992] # Defining this with self to plot all values later
         QTILE = torch.tensor(self.hru.to_numpy()[:,38].astype(float))[1461:2992]
         self.STMP10 = torch.tensor(self.hru.to_numpy()[:,39].astype(float))[1461:2992] # Defining this with self to plot all values later
@@ -270,6 +270,7 @@ class SWATrun:
         
         # Calculating Wilting Point, Field Capacity, and Saturation for appropriate layers:
         # TODO: Include %clay as an adjustable parameter. For now, it is defined using nominal value from .sol file    
+        
         clay = torch.tensor([22,22,42])
         BD = torch.tensor([1.11,1.25,1.26])
         AWC = torch.tensor([0.24,0.32,0.23])
@@ -277,14 +278,10 @@ class SWATrun:
         self.wilting = (0.4*clay*BD)/100
         self.field_cap = self.wilting + AWC
         self.sat = torch.ones(3) - (BD/2.65)
-        
-        # Applying special conditions for layer 5 to Wilting Point and Field Capacity:
-        self.field_cap[2] = self.sat[2] - 0.05
-        self.wilting[2] = self.field_cap[2] - AWC[2]
-               
+                      
         # Stacking outputs in order as seen in obtileQ:
         
-        sensors = torch.stack([QTILE,SURQ,self.VWC10,self.VWC50,self.STMP10,self.STMP50,self.WATTBL],dim=1)    
+        sensors = torch.stack([QTILE,self.VWC10,self.VWC50,self.STMP10,self.STMP50,self.WATTBL],dim=1)    
         
         # sensors = torch.stack([QTILE,SURQ,TILEP,SURP,TILENO3,SURNO3,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)
         # sensors = torch.stack([QTILE,SURQ,TILEP,SURP,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)    
@@ -296,7 +293,7 @@ class SWATrun:
 if __name__== '__main__':
     a = SWATrun()
     dim = a.theta_dim
-    run_type = ['Rand'] # Types accepted: ['Rand','Input']
+    run_type = ['Input'] # Types accepted: ['Rand','Input']
     
     plotting = True # Option for turning plotting on/off
     
@@ -316,18 +313,40 @@ if __name__== '__main__':
         LB = a.LB
         UB = a.UB
         
+        theta1 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        output1 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        theta1_best = theta1[torch.argmin(output1)].to(dtype=torch.float32).unsqueeze(1)
+        output1_minaccum = np.minimum.accumulate(output1.numpy())
+        
+        theta2 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        output2 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        theta2_best = theta2[torch.argmin(output2)].to(dtype=torch.float32).unsqueeze(1)
+        output2_minaccum = np.minimum.accumulate(output2.numpy())
+        
+        theta3 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        output3 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        theta3_best = theta3[torch.argmin(output3)].to(dtype=torch.float32).unsqueeze(1)
+        output3_minaccum = np.minimum.accumulate(output3.numpy())
                
-        # theta = theta[torch.argmax(output)]
-
-        # theta_scaled = LB + (UB - LB)*theta
+        # # sensors1 = a(theta1_best)
+        # # sensors2 = a(theta2_best)
+        sensors3 = a(theta3_best)
         
-        # sensors = a(theta)
+        # df_theta3_sensors =  pd.DataFrame(sensors3)
+        # df_theta3_sensors.to_csv('df_theta3_sensors.csv', sep=',', index = False, encoding='utf-8')
         
-        # df_theta_TuRBO =  pd.DataFrame(theta)
-        # df_theta_TuRBO.to_csv('df_theta_TuRBO.csv', sep=',', index = False, encoding='utf-8')
+        # # sensors1_VWC20 = a.VWC20
+        # # sensors2_VWC20 = a.VWC20
+        # sensors3_VWC20 = a.VWC20
         
-                               
-        
+        sensors1 = torch.tensor(pd.read_csv('df_theta1_sensors.csv').to_numpy())
+        sensors2 = torch.tensor(pd.read_csv('df_theta2_sensors.csv').to_numpy())
+        sensors3 = torch.tensor(pd.read_csv('df_theta3_sensors.csv').to_numpy())
+                 
+        sensors1_VWC20 = torch.tensor(pd.read_csv('sensor1_VWC20.csv').to_numpy())
+        sensors2_VWC20 = torch.tensor(pd.read_csv('sensor2_VWC20.csv').to_numpy())
+        sensors3_VWC20 = torch.tensor(pd.read_csv('sensor3_VWC20.csv').to_numpy())
+                
     if plotting == True:    
     
         import matplotlib.pyplot as plt
@@ -341,96 +360,33 @@ if __name__== '__main__':
         end_tr_date = datetime.date(2023,12,31)
         all_dates = [start_tr_date + datetime.timedelta(days=i) for i in range((end_tr_date - start_tr_date).days + 1)]
         
-        # Sensors 1 & 2:
-        fig, ax = plt.subplots(2,1, figsize=(24, 12))
+        # # Sensors 1 & 2:
 
-        trts_split = all_dates[int(0.8*a.ground_truth[:,0].shape[0])]       
-        ax[0].plot(all_dates, sensors[:,0], color='b', lw=3)
-        ax[0].plot(all_dates, a.ground_truth[:,0],marker="x",linestyle="none",c='g')
-        ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        ax[0].set_ylabel("Tile Flow (mm)", fontsize = 16)
-        ax[0].set_xlabel("Date", fontsize = 16)
-        ax[0].set_xlim(start_tr_date, end_tr_date)
-        ax[0].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        ax[0].tick_params(axis='both', labelsize=16)
-        ax[0].grid(True)
+        fig, ax = plt.subplots(figsize=(24,6))  
         
-        trts_split = all_dates[int(0.8*a.ground_truth[:,1].shape[0])]
-        ax[1].plot(all_dates[0:1096], sensors[:,1][0:1096], color='b', lw=3)
-        ax[1].plot(all_dates, a.ground_truth[:,1],marker="x",linestyle="none",c='g')
-        ax[1].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        ax[1].set_ylabel("Surface Flow (mm)", fontsize = 16)
-        ax[1].set_xlabel("Date", fontsize = 16)
-        ax[1].set_xlim(start_tr_date, end_tr_date)
-        ax[1].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        ax[1].tick_params(axis='both', labelsize=16)
-        ax[1].grid(True)
-        
+        trts_split = all_dates[int(0.8*a.ground_truth[:,0].shape[0])]
+        plt.plot(all_dates, sensors1[:,0], color='orange', lw=3)
+        plt.plot(all_dates, sensors2[:,0], color='b', lw=3)
+        plt.plot(all_dates, sensors3[:,0], color='r', lw=3,linestyle='--')
+        plt.plot(all_dates, a.ground_truth[:,0],marker="x",linestyle="none",c='g')
+        plt.axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        plt.ylabel("Tile Flow (mm)", fontsize = 16)
+        plt.xlabel("Date", fontsize = 16)
+        plt.legend(['TuRBO-1: No Improvements','TuRBO-1: TMP','TuRBO-1: WTBL & TMP','Ground Truth'],loc='upper right',fontsize=12) 
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.grid(True)
         plt.tight_layout()
         plt.show()
-        
-        # # Sensors 3 & 4:
-        # fig, ax = plt.subplots(2,1, figsize=(24, 12))
-        
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,2].shape[0])] 
-        # ax[0].plot(all_dates, sensors[:,2], color='b', lw=3)
-        # ax[0].plot(all_dates, a.ground_truth[:,2],marker="x",linestyle="none",c='g')
-        # ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        # ax[0].set_ylabel("Tile P (g/ha)", fontsize = 16)
-        # ax[0].set_xlabel("Date", fontsize = 16)
-        # ax[0].set_xlim(start_tr_date, end_tr_date)
-        # ax[0].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[0].tick_params(axis='both', labelsize=16)
-        # ax[0].grid(True)
-        
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,3].shape[0])] 
-        # ax[1].plot(all_dates, sensors[:,3], color='b', lw=3)
-        # ax[1].plot(all_dates, a.ground_truth[:,3],marker="x",linestyle="none",c='g')
-        # ax[1].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        # ax[1].set_ylabel("Surface P (g/ha)", fontsize = 16)
-        # ax[1].set_xlabel("Date", fontsize = 16)
-        # ax[1].set_xlim(start_tr_date, end_tr_date)
-        # ax[1].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[1].tick_params(axis='both', labelsize=16)
-        # ax[1].grid(True)
-        
-        # plt.tight_layout()
-        # plt.show()
                 
-        # # Sensors 5 & 6:
-        # fig, ax = plt.subplots(2,1, figsize=(24, 12))
-        
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,4].shape[0])] 
-        # ax[0].plot(all_dates, sensors[:,4], color='b', lw=3)
-        # ax[0].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
-        # ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        # ax[0].set_ylabel("Tile NO3 (kg/ha)", fontsize = 16)
-        # ax[0].set_xlabel("Date", fontsize = 16)
-        # ax[0].set_xlim(start_tr_date, end_tr_date)
-        # ax[0].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[0].tick_params(axis='both', labelsize=16)
-        # ax[0].grid(True)
-        
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,5].shape[0])] 
-        # ax[1].plot(all_dates, sensors[:,5], color='b', lw=3)
-        # ax[1].plot(all_dates, a.ground_truth[:,5],marker="x",linestyle="none",c='g')
-        # ax[1].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        # ax[1].set_ylabel("Surface NO3 (kg/ha)", fontsize = 16)
-        # ax[1].set_xlabel("Date", fontsize = 16)
-        # ax[1].set_xlim(start_tr_date, end_tr_date)
-        # ax[1].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[1].tick_params(axis='both', labelsize=16)
-        # ax[1].grid(True)
-        
-        # plt.tight_layout()
-        # plt.show()
-        
         # Sensors 7,8,9:
         fig, ax = plt.subplots(3,1, figsize=(24, 12))
         
         trts_split = all_dates[int(0.8*a.ground_truth[:,2].shape[0])]
-        ax[0].plot(all_dates, sensors[:,2], color='b', lw=3)
-        ax[0].plot(all_dates, a.ground_truth[:,2],marker="x",linestyle="none",c='g')
+        ax[0].plot(all_dates, sensors1[:,1], color='orange', lw=3)
+        ax[0].plot(all_dates, sensors2[:,1], color='b', lw=3)
+        ax[0].plot(all_dates, sensors3[:,1], color='r', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,1],marker="x",linestyle="none",c='g')
         ax[0].axhline(y=a.wilting[0],color='red',xmin=0,xmax=1461)
         ax[0].axhline(y=a.field_cap[0],color='black',xmin=0,xmax=1461)
         ax[0].axhline(y=a.sat[0],color='green',xmin=0,xmax=1461)
@@ -443,8 +399,10 @@ if __name__== '__main__':
         ax[0].grid(True)
         
         # VWC 20 CM FOR VALIDATION
-        ax[1].plot(all_dates, a.VWC20, color='b', lw=3)
-        ax[1].plot(all_dates, a.ground_truth[:,11],marker="x",linestyle="none",c='g')
+        ax[1].plot(all_dates, sensors1_VWC20, color='orange', lw=3)
+        ax[1].plot(all_dates, sensors2_VWC20, color='b', lw=3)
+        ax[1].plot(all_dates, sensors3_VWC20, color='r', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,10],marker="x",linestyle="none",c='g')
         ax[1].axhline(y=a.wilting[1],color='red',xmin=0,xmax=1461)
         ax[1].axhline(y=a.field_cap[1],color='black',xmin=0,xmax=1461)
         ax[1].axhline(y=a.sat[1],color='green',xmin=0,xmax=1461)
@@ -456,8 +414,10 @@ if __name__== '__main__':
         ax[1].grid(True)
         
         trts_split = all_dates[int(0.8*a.ground_truth[:,3].shape[0])]
-        ax[2].plot(all_dates, sensors[:,3], color='b', lw=3)
-        ax[2].plot(all_dates, a.ground_truth[:,3],marker="x",linestyle="none",c='g')
+        ax[2].plot(all_dates, sensors1[:,2], color='orange', lw=3)
+        ax[2].plot(all_dates, sensors2[:,2], color='b', lw=3)
+        ax[2].plot(all_dates, sensors3[:,2], color='r', lw=3)
+        ax[2].plot(all_dates, a.ground_truth[:,2],marker="x",linestyle="none",c='g')
         ax[2].axhline(y=a.wilting[2],color='red',xmin=0,xmax=1461)
         ax[2].axhline(y=a.field_cap[2],color='black',xmin=0,xmax=1461)
         ax[2].axhline(y=a.sat[2],color='green',xmin=0,xmax=1461)
@@ -470,75 +430,92 @@ if __name__== '__main__':
         ax[2].grid(True)
         
         handles, labels = ax[0].get_legend_handles_labels()
-        line1, = ax[0].plot([], [], color='b', lw=3)              # TuRBO
-        line2, = ax[0].plot([], [], marker="x", linestyle="none", color='g')  # Ground Truth
-        line3 = plt.Line2D([], [], color='red')             # Wilting Point
-        line4 = plt.Line2D([], [], color='black')           # Field Capacity
-        line5 = plt.Line2D([], [], color='green')           # Saturation
-        line6 = plt.Line2D([], [], color='black', linestyle='--')
+        line1, = ax[0].plot([], [], color='orange', lw=3)              # TuRBO
+        line2, = ax[0].plot([], [], color='b', lw=3)              # TuRBO
+        line3, = ax[0].plot([], [], color='r', lw=3)              # TuRBO
+        line4, = ax[0].plot([], [], marker="x", linestyle="none", color='g')  # Ground Truth
+        line5 = plt.Line2D([], [], color='red')             # Wilting Point
+        line6 = plt.Line2D([], [], color='black')           # Field Capacity
+        line7 = plt.Line2D([], [], color='green')           # Saturation
+        line8 = plt.Line2D([], [], color='black', linestyle='--')
         
-        fig.legend([line1, line2, line3, line4, line5, line6],
-                   ['TuRBO', 'Ground Truth', 'Wilting Point', 'Field Capacity', 'Saturation','Train/Test Split'],
-                   loc='center left', bbox_to_anchor=(1.01, 0.5), fontsize=16)
-        
-        plt.tight_layout()
-        plt.show()
-        
-        
-        # Sensors 10,11,12:
-        fig, ax = plt.subplots(3,1, figsize=(24, 12))
-        
-        trts_split = all_dates[int(0.8*a.ground_truth[:,4].shape[0])]
-        ax[0].plot(all_dates, sensors[:,4], color='b', lw=3)
-        ax[0].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
-        ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        ax[0].set_ylabel("TMP - 10 cm", fontsize = 16)
-        ax[0].set_xlabel("Date", fontsize = 16)
-        ax[0].set_xlim(start_tr_date, end_tr_date)
-        ax[0].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        ax[0].tick_params(axis='both', labelsize=16)
-        ax[0].grid(True)
-        
-        # TMP 20 CM FOR VALIDATION
-        trts_split = all_dates[int(0.8*a.ground_truth[:,12].shape[0])]
-        ax[1].plot(all_dates, a.STMP20, color='b', lw=3)
-        ax[1].plot(all_dates, a.ground_truth[:,12],marker="x",linestyle="none",c='g')
-        ax[1].set_ylabel("TMP - 20 cm", fontsize = 16)
-        ax[1].set_xlabel("Date", fontsize = 16)
-        ax[1].set_xlim(start_tr_date, end_tr_date)
-        ax[1].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        ax[1].tick_params(axis='both', labelsize=16)
-        ax[1].grid(True)
-        
-        trts_split = all_dates[int(0.8*a.ground_truth[:,5].shape[0])]
-        ax[2].plot(all_dates, sensors[:,5], color='b', lw=3)
-        ax[2].plot(all_dates, a.ground_truth[:,5],marker="x",linestyle="none",c='g')
-        ax[2].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        ax[2].set_ylabel("TMP - 50 cm", fontsize = 16)
-        ax[2].set_xlabel("Date", fontsize = 16)
-        ax[2].set_xlim(start_tr_date, end_tr_date)
-        ax[2].legend(['TuRBO','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        ax[2].tick_params(axis='both', labelsize=16)
-        ax[2].grid(True)
+        fig.legend([line1, line2, line3, line4, line5, line6, line7, line8],
+                    ['TuRBO-1: No Improvement','TuRBO-1: TMP','TuRBO-1: TMP & WTBL', 'Ground Truth', 'Wilting Point', 'Field Capacity', 'Saturation','Train/Test Split'],
+                    loc='center left', bbox_to_anchor=(1.01, 0.5), fontsize=16)
         
         plt.tight_layout()
         plt.show()
+        
+        
+        # # Sensors 10,11,12:
+        # fig, ax = plt.subplots(3,1, figsize=(24, 12))
+        
+        # trts_split = all_dates[int(0.8*a.ground_truth[:,4].shape[0])]
+        # ax[0].plot(all_dates, sensors3[:,3], color='r', lw=3)
+        # ax[0].plot(all_dates, a.ground_truth[:,3],marker="x",linestyle="none",c='g')
+        # ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        # ax[0].set_ylabel("TMP - 10 cm", fontsize = 16)
+        # ax[0].set_xlabel("Date", fontsize = 16)
+        # ax[0].set_xlim(start_tr_date, end_tr_date)
+        # ax[0].set_ylim([-10,35])
+        # ax[0].legend(['TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
+        # ax[0].tick_params(axis='both', labelsize=16)
+        # ax[0].grid(True)
+        
+        # # TMP 20 CM FOR VALIDATION
+        # trts_split = all_dates[int(0.8*a.ground_truth[:,11].shape[0])]
+        # ax[1].plot(all_dates, a.STMP20, color='r', lw=3)
+        # ax[1].plot(all_dates, a.ground_truth[:,11],marker="x",linestyle="none",c='g')
+        # ax[1].set_ylabel("TMP - 20 cm", fontsize = 16)
+        # ax[1].set_xlabel("Date", fontsize = 16)
+        # ax[1].set_xlim(start_tr_date, end_tr_date)
+        # ax[1].set_ylim([-5,35])
+        # ax[1].legend(['TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
+        # ax[1].tick_params(axis='both', labelsize=16)
+        # ax[1].grid(True)
+        
+        # trts_split = all_dates[int(0.8*a.ground_truth[:,5].shape[0])]
+        # ax[2].plot(all_dates, sensors3[:,4], color='r', lw=3)
+        # ax[2].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
+        # ax[2].axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        # ax[2].set_ylabel("TMP - 50 cm", fontsize = 16)
+        # ax[2].set_xlabel("Date", fontsize = 16)
+        # ax[2].set_xlim(start_tr_date, end_tr_date)
+        # ax[2].set_ylim([-5,35])
+        # ax[2].legend(['TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
+        # ax[2].tick_params(axis='both', labelsize=16)
+        # ax[2].grid(True)
+        
+        # plt.tight_layout()
+        # plt.show()
     
         # Sensor 13:
-            
-        fig, ax = plt.subplots(figsize=(24, 6))
         
-        trts_split = all_dates[int(0.8*a.ground_truth[:,6].shape[0])+160]
-        plt.plot(all_dates[731:1461], sensors[:,6][731:1461], color='b', lw=3)  
-        plt.plot(all_dates[731:1461], a.ground_truth[:,6][731:1461],marker="x",linestyle="none",c='g')
-        plt.axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        plt.ylabel("Water Table Distance (mm)", fontsize = 16)
-        plt.xlabel("Date", fontsize = 16)
-        plt.legend(['TuRBO','Ground Truth','Train/Test Split'],loc='lower center',fontsize=16,ncol=3) 
+        precip = "C:\\SWAT_Calibration\\PrecipData.txt"
+        precip = pd.read_fwf(precip).to_numpy()
+        
+        fig, ax1 = plt.subplots(figsize=(24, 6))
+        ax2 = ax1.twinx()
+        
+        trts_split = all_dates[int(0.8*a.ground_truth[:,5].shape[0])+50]
+        ax1.plot(all_dates[731:1461], sensors1[:,5][731:1461], color='orange', lw=3)
+        ax1.plot(all_dates[731:1461], sensors2[:,5][731:1461], color='b', lw=3)
+        ax1.plot(all_dates[731:1461], sensors3[:,5][731:1461], color='r', lw=3,linestyle="--")
+        ax1.plot(all_dates[731:1461], a.ground_truth[:,5][731:1461],marker="x",linestyle="none",c='g')
+        ax1.axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        
+        ax2.plot(all_dates[731:1461],precip[730:1461], color='k',lw=2)
+        
+        ax2.set_ylabel("Precipitation (mm)", fontsize = 16)
+        ax1.set_ylabel("Water Table Distance (mm)", fontsize = 16)
+        ax1.set_xlabel("Date", fontsize = 16)
+        ax1.tick_params(axis='both', labelsize=16)
+        ax1.legend(['TuRBO-1: No Improvement','TuRBO-1: TMP','TuRBO-1: WTBL & TMP','Ground Truth','Train/Test Split'],loc='upper right',fontsize=16,ncol=1) 
+        ax2.legend(['Prec.'],loc='lower left',fontsize=16)
         plt.xticks(fontsize=16)
         plt.yticks(fontsize=16)
         plt.ylim([0,1800])
-        plt.gca().invert_yaxis()
+        ax1.invert_yaxis()
         plt.grid(True)
         plt.tight_layout()
         plt.show()

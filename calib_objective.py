@@ -52,14 +52,14 @@ class ObjFunc:
             
             # output[i] = torch.sqrt(torch.sum(torch.square((sensors[:,i][mask[:,i]]-ground_truth[:,i][mask[:,i]])/len(ground_truth[:,i][mask[:,i]]))))/torch.std(ground_truth[:,i][mask[:,i]])
              
-        
         return torch.sum(output,dim=0)
 
 if __name__== '__main__':
     
     simulator = SWATrun()
+    f = ObjFunc()
     dim = simulator.theta_dim
-    run_type = ['TuRBO-1'] # Types accepted: ['Rand','Sobol','TuRBO-1']
+    run_type = ['Input'] # Types accepted: ['Rand','Sobol','Input','TuRBO-1']
     plotting = True # Option for turning plotting on/off
     seed = 0    
     
@@ -114,6 +114,23 @@ if __name__== '__main__':
         #     sensor13[i] = sensors[:,12]
         #     print(f" [{i+1}] Sobol run complete.")
         
+    if run_type == ['Input']:
+        
+        theta1 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        output1 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        theta1_best = theta1[torch.argmin(output1)].to(dtype=torch.float32).unsqueeze(1)
+        output1_minaccum = np.minimum.accumulate(output1.numpy())
+        
+        theta2 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        output2 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        theta2_best = theta2[torch.argmin(output2)].to(dtype=torch.float32).unsqueeze(1)
+        output2_minaccum = np.minimum.accumulate(output2.numpy())
+        
+        theta3 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        output3 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        theta3_best = theta3[torch.argmin(output3)].to(dtype=torch.float32).unsqueeze(1)
+        output3_minaccum = np.minimum.accumulate(output3.numpy())
+        
     if run_type == ['TuRBO-1']:
                
         f = ObjFunc()
@@ -122,7 +139,7 @@ if __name__== '__main__':
              lb = np.array(f.LB),  # Numpy array specifying lower bounds
              ub = np.array(f.UB),  # Numpy array specifying upper bounds
              n_init = 2*dim,  # Number of initial bounds from an Latin hypercube design
-             max_evals = 1000,  # Maximum number of evaluations
+             max_evals = 5000,  # Maximum number of evaluations
              batch_size = 10,  # How large batch size TuRBO uses
              verbose = True,  # Print information from each batch
              use_ard = True,  # Set to true if you want to use ARD for the GP kernel
@@ -140,23 +157,61 @@ if __name__== '__main__':
         f_best, x_best = fX[ind_best], X[ind_best, :]
         
         print("Best value found:\n\tf(x) = %.3f\nObserved at:\n\tx = %s" % (f_best, np.around(x_best, 3)))
+        
+        df_theta_TuRBO1 =  pd.DataFrame(X)
+        df_theta_TuRBO1.to_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
+        
+        df_output_TuRBO1 =  pd.DataFrame(fX)
+        df_output_TuRBO1.to_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
 
     if plotting == True:
 
         fig, ax = plt.subplots(figsize=(8, 6))  
-        plt.plot(np.minimum.accumulate(fX), marker="", lw=3,c='b')
-        plt.plot(fX,marker=".",linestyle="none",c='b',alpha=0.1)
+        plt.plot(output1_minaccum, marker="", lw=3,c='orange')
+        plt.plot(output2_minaccum, marker="", lw=3,c='b')
+        plt.plot(output3_minaccum, marker="", lw=3,c='r')
+        #plt.plot(fX,marker=".",linestyle="none",c='b',alpha=0.1)
         ax.set_yscale('log')
         plt.ylabel("Loss", fontsize = 16)
         plt.xlabel("Evaluations", fontsize = 16)
-        plt.legend(['TuRBO','TuRBO_eval'],loc='upper right',fontsize=12) 
-        plt.xticks(fontsize=14)
-        plt.yticks(fontsize=14)
+        plt.legend(['TuRBO-1: No Improvements','TuRBO-1: TMP','TuRBO-1: WTBL & TMP'],loc='upper right',fontsize=12) 
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
         plt.grid(True)
         plt.tight_layout()
         plt.show()
         
-  
+        
+        fig, ax = plt.subplots(1,3, figsize=(16, 6))  
+        ax[0].plot(output1_minaccum, marker="", lw=3,c='orange')
+        ax[0].plot(output1, marker=".",linestyle="none",c='orange',alpha=0.1)
+        ax[0].set_yscale('log')
+        ax[0].set_ylabel("Loss", fontsize = 16)
+        ax[0].set_xlabel("Evaluations", fontsize = 16)
+        ax[0].legend(['TuRBO-1: No Improvements','Evaluations'],loc='upper right',fontsize=12) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].set_ylim(4, 10)
+        ax[0].grid(True)      
+        
+        ax[1].plot(output2_minaccum, marker="", lw=3,c='b')
+        ax[1].plot(output2, marker=".",linestyle="none",c='b',alpha=0.1)
+        ax[1].set_yscale('log')
+        ax[1].set_ylabel("Loss", fontsize = 16)
+        ax[1].set_xlabel("Evaluations", fontsize = 16)
+        ax[1].legend(['TuRBO-1: TMP - Best','Evaluations'],loc='upper right',fontsize=12) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].set_ylim(4, 10)
+        ax[1].grid(True)
 
-                  
+        ax[2].plot(output3_minaccum, marker="", lw=3,c='r')
+        ax[2].plot(output3,marker=".",linestyle="none",c='r',alpha=0.1)
+        ax[2].set_yscale('log')
+        ax[2].set_ylabel("Loss", fontsize = 16)
+        ax[2].set_xlabel("Evaluations", fontsize = 16)
+        ax[2].legend(['TuRBO-1: WTBL & TMP - Best','Evaluations'],loc='upper right',fontsize=12) 
+        ax[2].tick_params(axis='both', labelsize=16)
+        ax[2].set_ylim(4, 10)
+        ax[2].grid(True)
+        plt.tight_layout()
+        plt.show()         
 
