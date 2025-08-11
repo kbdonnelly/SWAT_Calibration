@@ -30,23 +30,27 @@ class ObjFunc:
         # theta_scaled = LB + (UB - LB)*theta
         
         # Running model to obtain desired outputs:    
-        sensors = self.simulator(theta)   
+        sensors = self.simulator(theta)
+        sensors_cali = sensors[639:-1,:]
         
         # Obtaining ground truth data from simulator:
-        ground_truth = self.simulator.ground_truth
-   
+        ground_truth = self.simulator.ground_truth[:,0:8]
+        cali_range = ground_truth[639:-1,:]
+        vali_range = ground_truth[0:639,:]
+         
         output = torch.zeros(sensors.size(1))
+        
         for i in range(sensors.size(1)):
             
             # Creating a mask to account for NaNs in ground truth data for calculation:
-            mask = ~torch.isnan(ground_truth[:, i])
-            valid_gt = ground_truth[mask, i]
-            valid_pred = sensors[mask, i]
+            mask = ~torch.isnan(cali_range[:, i])
+            valid_gt = cali_range[mask, i]
+            valid_pred = sensors_cali[mask, i]
 
-            # Take only first 80% of valid data: 
-            cutoff = int(0.8 * len(valid_gt))
-            valid_gt = valid_gt[:cutoff]
-            valid_pred = valid_pred[:cutoff]
+            # # Take only first 80% of valid data: 
+            # cutoff = int(0.8 * len(valid_gt))
+            # valid_gt = valid_gt[:cutoff]
+            # valid_pred = valid_pred[:cutoff]
             
             output[i] = torch.sqrt(torch.mean((valid_pred - valid_gt)**2)) / torch.std(valid_gt)
             
@@ -59,23 +63,27 @@ if __name__== '__main__':
     simulator = SWATrun()
     f = ObjFunc()
     dim = simulator.theta_dim
-    run_type = ['Input'] # Types accepted: ['Rand','Sobol','Input','TuRBO-1']
-    plotting = True # Option for turning plotting on/off
+    run_type = ['TuRBO-1'] # Types accepted: ['Rand','Sobol','Input','TuRBO-1']
+    plotting = False # Option for turning plotting on/off
     seed = 0    
     
     if run_type == ['Rand']:
         
-        theta_rand = torch.rand(1,dim)
+        theta = torch.rand(1,dim)
+        LB = simulator.LB
+        UB = simulator.UB
         
-        output = torch.empty(theta_rand.shape[0])
-        for i in range(theta_rand.shape[0]):
-            output[i] = torch.sum(ObjFunc(theta_rand[i]))
-            print(f"[{i}] Random interation complete.")
+        theta_scaled = LB + (UB - LB)*theta
+        output = f(theta_scaled.squeeze(0))
         
-        df_X_Random =  pd.DataFrame(theta_rand)
-        df_X_Random.to_csv('df_X_Random.csv', sep=',', index = False, encoding='utf-8')
-        df_Y_Random =  pd.DataFrame(output)
-        df_Y_Random.to_csv('df_Y_Random.csv', sep=',', index = False, encoding='utf-8')
+        # for i in range(theta_scaled.shape[0]):
+        #     output[i] = ObjFunc(theta_scaled[i])
+        #     print(f"[{i}] Random interation complete.")
+        
+        # df_X_Random =  pd.DataFrame(theta_rand)
+        # df_X_Random.to_csv('df_X_Random.csv', sep=',', index = False, encoding='utf-8')
+        # df_Y_Random =  pd.DataFrame(output)
+        # df_Y_Random.to_csv('df_Y_Random.csv', sep=',', index = False, encoding='utf-8')
         
         
     if run_type == ['Sobol']:
@@ -139,7 +147,7 @@ if __name__== '__main__':
              lb = np.array(f.LB),  # Numpy array specifying lower bounds
              ub = np.array(f.UB),  # Numpy array specifying upper bounds
              n_init = 2*dim,  # Number of initial bounds from an Latin hypercube design
-             max_evals = 5000,  # Maximum number of evaluations
+             max_evals = 20000,  # Maximum number of evaluations
              batch_size = 10,  # How large batch size TuRBO uses
              verbose = True,  # Print information from each batch
              use_ard = True,  # Set to true if you want to use ARD for the GP kernel

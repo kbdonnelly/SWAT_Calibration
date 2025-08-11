@@ -36,6 +36,10 @@ class SWATrun:
              
         """
         
+        self.IWTDN = False
+        self.SWATFT = False
+        self.exec_path = "swatftflag.exe" # Other option: "depimpchange.exe"
+        
         self.param_bsn = [("SFTMP.bsn", -3, 3),
                           ("SMTMP.bsn", -3, 3),
                           ("TIMP.bsn", 0.01, 0.4),
@@ -47,7 +51,7 @@ class SWATrun:
                           ("EPCO.hru", 0, 1),
                           ("R2ADJ.hru", 0, 1),
                           ("OV_N.hru", 0.05, 0.5),
-                          ("DEP_IMP.hru", 1524, 2500)]
+                          ("DEP_IMP.hru", 1524, 2133.6)]
         self.param_mgt = [("CN2.mgt", 84, 94)]
         self.param_sdr = [("LATKSATF.sdr", 1, 4)]             
         self.param_sol = [("SOL_CRK.sol", 0, 0.5)]
@@ -103,21 +107,45 @@ class SWATrun:
         DefaultPath_bsn = "C:\\SWAT_Calibration\\Nominal_Input_Files\\basins.bsn"
         InputPath_bsn = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + bsn_name + ".bsn"
         
-        old_line_bsn = [None]*len(self.param_bsn)
-        new_line_bsn = [None]*len(self.param_bsn)
-            
-        for i in range(len(self.param_bsn)):
-            theta_str = theta[i].squeeze(0).tolist()
-            theta_str = f'{theta_str:.5f}'
-            new_line_bsn[i] = theta_str.rjust(16) + pd.read_csv(self.BSN_iter_path, header=None).loc[i].to_string(index=False)
-            old_line_bsn[i] = pd.read_csv(self.BSN_nom_path, header=None).loc[i].to_string(index=False)
-            
+        old_line_bsn = [None]*(len(self.param_bsn)+2)
+        new_line_bsn = [None]*(len(self.param_bsn)+2)
+        
+        for i in range(len(self.param_bsn) + 2):
+            if i < len(self.param_bsn):            
+                theta_str = theta[i].squeeze(0).tolist()
+                theta_str = f'{theta_str:.5f}'
+                new_line_bsn[i] = theta_str.rjust(16) + pd.read_csv(self.BSN_iter_path, header=None).loc[i].to_string(index=False)
+                old_line_bsn[i] = pd.read_csv(self.BSN_nom_path, header=None).loc[i].to_string(index=False)
+            if i == len(self.param_bsn):
+                if self.IWTDN == True:
+                    theta_str = torch.tensor(2).tolist()
+                    theta_str = f'{theta_str}'
+                    new_line_bsn[i] = theta_str.rjust(16) + pd.read_csv(self.BSN_iter_path, header=None).loc[i].to_string(index=False)
+                    old_line_bsn[i] = pd.read_csv(self.BSN_nom_path, header=None).loc[i].to_string(index=False)
+                if self.IWTDN == False:
+                    theta_str = torch.tensor(1).tolist()
+                    theta_str = f'{theta_str}'
+                    new_line_bsn[i] = theta_str.rjust(16) + pd.read_csv(self.BSN_iter_path, header=None).loc[i].to_string(index=False)
+                    old_line_bsn[i] = pd.read_csv(self.BSN_nom_path, header=None).loc[i].to_string(index=False)
+                    
+            if i == len(self.param_bsn) + 1:
+                if self.SWATFT == True:
+                    theta_str = torch.tensor(1).tolist()
+                    theta_str = f'{theta_str}'
+                    new_line_bsn[i] = theta_str.rjust(16) + pd.read_csv(self.BSN_iter_path, header=None).loc[i].to_string(index=False)
+                    old_line_bsn[i] = pd.read_csv(self.BSN_nom_path, header=None).loc[i].to_string(index=False)
+                if self.SWATFT == False:
+                    theta_str = torch.tensor(0).tolist()
+                    theta_str = f'{theta_str}'
+                    new_line_bsn[i] = theta_str.rjust(16) + pd.read_csv(self.BSN_iter_path, header=None).loc[i].to_string(index=False)
+                    old_line_bsn[i] = pd.read_csv(self.BSN_nom_path, header=None).loc[i].to_string(index=False)
+                    
         shutil.copy(DefaultPath_bsn, InputPath_bsn)
         with open(InputPath_bsn, 'r') as file1:  # Read in the .bsn file
             filedata1 = file1.read()     
         
         # Finds old line in .bsn file, replaces it with new theta:
-        for i in range(len(self.param_bsn)):    
+        for i in range(len(self.param_bsn) + 2):    
             filedata1 = filedata1.replace(old_line_bsn[i], new_line_bsn[i])
         
         with open(InputPath_bsn, 'w') as file1:  # Write the file out again
@@ -241,8 +269,8 @@ class SWATrun:
         start = time.time()
         print('Running SWAT...')
         project_path = "C:\\SWAT_Calibration\\Buckeye_TxtInOut"
-        swat_exe = os.path.join(project_path, "depimpchange.exe")
-        subprocess.run([swat_exe], cwd=project_path)
+        self.swat_exe = os.path.join(project_path, self.exec_path)
+        subprocess.run([self.swat_exe], cwd=project_path)
         end = time.time()
         print('SWAT run complete in' + ' ' + f'{end-start:.4f}' + ' ' + 'seconds.')
 
@@ -271,9 +299,9 @@ class SWATrun:
         # Calculating Wilting Point, Field Capacity, and Saturation for appropriate layers:
         # TODO: Include %clay as an adjustable parameter. For now, it is defined using nominal value from .sol file    
         
-        clay = torch.tensor([22,22,42])
-        BD = torch.tensor([1.11,1.25,1.26])
-        AWC = torch.tensor([0.24,0.32,0.23])
+        clay = torch.tensor([26.65,31.42,34.32])
+        BD = torch.tensor([1.16,1.25,1.26])
+        AWC = torch.tensor([0.21,0.26,0.28])
         
         self.wilting = (0.4*clay*BD)/100
         self.field_cap = self.wilting + AWC
@@ -281,7 +309,7 @@ class SWATrun:
                       
         # Stacking outputs in order as seen in obtileQ:
         
-        sensors = torch.stack([QTILE,self.VWC10,self.VWC50,self.STMP10,self.STMP50,self.WATTBL],dim=1)    
+        sensors = torch.stack([QTILE,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)    
         
         # sensors = torch.stack([QTILE,SURQ,TILEP,SURP,TILENO3,SURNO3,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)
         # sensors = torch.stack([QTILE,SURQ,TILEP,SURP,self.VWC10,self.VWC20,self.VWC50,self.STMP10,self.STMP20,self.STMP50,self.WATTBL],dim=1)    
@@ -293,9 +321,9 @@ class SWATrun:
 if __name__== '__main__':
     a = SWATrun()
     dim = a.theta_dim
-    run_type = ['Input'] # Types accepted: ['Rand','Input']
+    run_type = ['Rand'] # Types accepted: ['Rand','Input']
     
-    plotting = True # Option for turning plotting on/off
+    plotting = False # Option for turning plotting on/off
     
     if run_type == ['Rand']:
         theta = torch.rand(dim)
@@ -313,24 +341,24 @@ if __name__== '__main__':
         LB = a.LB
         UB = a.UB
         
-        theta1 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
-        output1 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
-        theta1_best = theta1[torch.argmin(output1)].to(dtype=torch.float32).unsqueeze(1)
-        output1_minaccum = np.minimum.accumulate(output1.numpy())
+        # theta1 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        # output1 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        # theta1_best = theta1[torch.argmin(output1)].to(dtype=torch.float32).unsqueeze(1)
+        # output1_minaccum = np.minimum.accumulate(output1.numpy())
         
-        theta2 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
-        output2 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
-        theta2_best = theta2[torch.argmin(output2)].to(dtype=torch.float32).unsqueeze(1)
-        output2_minaccum = np.minimum.accumulate(output2.numpy())
+        # theta2 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        # output2 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        # theta2_best = theta2[torch.argmin(output2)].to(dtype=torch.float32).unsqueeze(1)
+        # output2_minaccum = np.minimum.accumulate(output2.numpy())
         
-        theta3 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
-        output3 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
-        theta3_best = theta3[torch.argmin(output3)].to(dtype=torch.float32).unsqueeze(1)
-        output3_minaccum = np.minimum.accumulate(output3.numpy())
+        # theta3 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        # output3 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        # theta3_best = theta3[torch.argmin(output3)].to(dtype=torch.float32).unsqueeze(1)
+        # output3_minaccum = np.minimum.accumulate(output3.numpy())
                
         # # sensors1 = a(theta1_best)
         # # sensors2 = a(theta2_best)
-        sensors3 = a(theta3_best)
+        # sensors3 = a(theta3_best)
         
         # df_theta3_sensors =  pd.DataFrame(sensors3)
         # df_theta3_sensors.to_csv('df_theta3_sensors.csv', sep=',', index = False, encoding='utf-8')
@@ -339,13 +367,13 @@ if __name__== '__main__':
         # # sensors2_VWC20 = a.VWC20
         # sensors3_VWC20 = a.VWC20
         
-        sensors1 = torch.tensor(pd.read_csv('df_theta1_sensors.csv').to_numpy())
-        sensors2 = torch.tensor(pd.read_csv('df_theta2_sensors.csv').to_numpy())
-        sensors3 = torch.tensor(pd.read_csv('df_theta3_sensors.csv').to_numpy())
+        # sensors1 = torch.tensor(pd.read_csv('df_theta1_sensors.csv').to_numpy())
+        # sensors2 = torch.tensor(pd.read_csv('df_theta2_sensors.csv').to_numpy())
+        # sensors3 = torch.tensor(pd.read_csv('df_theta3_sensors.csv').to_numpy())
                  
-        sensors1_VWC20 = torch.tensor(pd.read_csv('sensor1_VWC20.csv').to_numpy())
-        sensors2_VWC20 = torch.tensor(pd.read_csv('sensor2_VWC20.csv').to_numpy())
-        sensors3_VWC20 = torch.tensor(pd.read_csv('sensor3_VWC20.csv').to_numpy())
+        # sensors1_VWC20 = torch.tensor(pd.read_csv('sensor1_VWC20.csv').to_numpy())
+        # sensors2_VWC20 = torch.tensor(pd.read_csv('sensor2_VWC20.csv').to_numpy())
+        # sensors3_VWC20 = torch.tensor(pd.read_csv('sensor3_VWC20.csv').to_numpy())
                 
     if plotting == True:    
     

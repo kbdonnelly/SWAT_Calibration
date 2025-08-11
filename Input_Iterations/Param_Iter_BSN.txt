@@ -5,3 +5,5 @@
     | SMFMN : Melt factor for snow on December 21
     | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
     | SNO50COV : Fraction of snow volume represented by SNOCOVMX that corresponds to 50% snow cover
+    | IWTDN: Water table depth algorithms flag
+    | SWATFT: Soil temperature module
