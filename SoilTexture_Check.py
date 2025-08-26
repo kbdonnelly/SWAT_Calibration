@@ -60,7 +60,7 @@ dates = pd.date_range(start=f"1/1/2020", periods = 1461).strftime("%m/%d/%Y")
 ground_truth = torch.tensor(df1.iloc[:,1:14].to_numpy())
 
 # Calculating Wilting Point, Field Capacity, and Saturation for appropriate layers:
-# TODO: Include %clay as an adjustable parameter. For now, it is defined using nominal value from .sol file    
+  
 sample = 10000
 sobol = SobolEngine(9, scramble=True)
 sobol_draw = sobol.draw(sample).to(dtype=dtype, device=device)
