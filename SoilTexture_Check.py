@@ -25,18 +25,12 @@ from datetime import datetime, timedelta
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import time
 
-param_sol = [("KSAT(1).sol", 2, 35),
-             ("KSAT(2).sol", 2, 35),
-             ("KSAT(3).sol", 2, 35),
-             ("KSAT(4).sol", 2, 35),
-             ("KSAT(5).sol", 2, 35),
-             ("KSAT(6).sol", 2, 35),
-             ("SOL_BD(1).sol", 0.9, 1),
-             ("SOL_BD(2).sol", 1, 1.2),
-             ("SOL_BD(3).sol", 1.2, 1.25),
-             ("SOL_BD(4).sol", 1.25, 1.3),
-             ("SOL_BD(5).sol", 1.3, 1.8),
-             ("SOL_BD(6).sol", 1.8, 2.0),
+param_sol = [("SOL_BD(1).sol", 0.95, 1.25),
+             ("SOL_BD(2).sol", 1.1, 1.35),
+             ("SOL_BD(3).sol", 1.2, 1.45),
+             ("SOL_BD(4).sol", 1.2, 1.55),
+             ("SOL_BD(5).sol", 1.4, 1.9),
+             ("SOL_BD(6).sol", 1.5, 2.0),
              ("SOL_AWC(1).sol", 0.1, 0.4),
              ("SOL_AWC(2).sol", 0.1, 0.4),
              ("SOL_AWC(3).sol", 0.1, 0.4),
@@ -59,22 +53,64 @@ df1 = pd.read_csv('obtileQmin.csv')
 dates = pd.date_range(start=f"1/1/2020", periods = 1461).strftime("%m/%d/%Y")
 ground_truth = torch.tensor(df1.iloc[:,1:14].to_numpy())
 
+# Sampling, and checking if sample violates conditions. 
+# TODO: If it does, then it needs to be resampled for analysis. We won't have this problem in a latent box for TuRBO
+samples = 10000
+sobol = SobolEngine(18, scramble=True)
+sobol_samples = sobol.draw(samples).to(dtype=dtype, device=device)
+
+BD = sobol_samples[:,0:6]*(UB[0:6]-LB[0:6]) + LB[0:6]
+check = torch.zeros(samples)
+
+
+for i in range(samples):
+    checki = 0
+    for j in range(BD.size(1)-1):
+        if BD[i,j+1] < 0.9*BD[i,j]:
+            checki += 1
+    if checki > 0:
+        check[i] = 1
+
+mask = (check == 1)
+sobol_clean = sobol_samples[~mask]
+
+# check = torch.zeros(len(BD_clean))
+# for i in range(len(BD_clean)):    
+#     checki = 0
+#     for k in range(BD_clean.size(1)-1):    
+#         if BD_clean[i,k+1] < BD_clean[i,k]:
+#             checki += 1
+#     if checki > 0:
+#         check[i] += 1
+
+# mask = (check == 1)
+# BD_cleaner = BD_clean[~mask]        
+
+# mask1 = check == 1
+# mask2 = check == 2
+# count1 = torch.sum(mask1.int()) 
+# count2 = torch.sum(mask2.int())
+    
+# # Removing samples that violate conditions:
+# sobol_10perc = sobol_samples[~mask1]
+# sobol_incr = sobol_samples[~mask2]
+
+# BD_clean = sobol_incr[:,0:6]*(UB[0:6]-LB[0:6]) + LB[0:6]    
+
+
 # Calculating Wilting Point, Field Capacity, and Saturation for appropriate layers:
-  
-sample = 10000
-sobol = SobolEngine(9, scramble=True)
-sobol_draw = sobol.draw(sample).to(dtype=dtype, device=device)
+    
+wilting = torch.empty(len(sobol_clean),3)
+field_cap = torch.empty(len(sobol_clean),3)
+sat = torch.empty(len(sobol_clean),3)
 
-clay = sobol_draw[:,0:3]*(UB[19:22]-LB[19:22]) + LB[19:22]
-BD = sobol_draw[:,3:6]*(UB[7:10]-LB[7:10]) + LB[7:10]
-AWC = sobol_draw[:,6:9]*(UB[13:16]-LB[13:16]) + LB[13:16]
+BD = sobol_clean[:,0:6]*(UB[0:6]-LB[0:6]) + LB[0:6]
+AWC = sobol_clean[:,6:12]*(UB[6:12]-LB[6:12]) + LB[6:12]
+clay = sobol_clean[:,12:18]*(UB[12:18]-LB[12:18]) + LB[12:18]
 
-wilting = torch.empty(sample,3)
-field_cap = torch.empty(sample,3)
-sat = torch.empty(sample,3)
 
 for i in range(3):
-    for j in range(sample):
+    for j in range(len(sobol_clean)):
         wilting[j,i] = (0.4*clay[j,i]*BD[j,i])/100
         field_cap[j,i] = wilting[j,i] + AWC[j,i]
         sat[j,i] = 1 - (BD[j,i]/2.65)
@@ -96,7 +132,7 @@ field_cap_std = torch.std(field_cap,dim=0)
 sat_std = torch.std(sat,dim=0)
 
 
-# VWC Plots:
+# # VWC Plots:
 fig, ax = plt.subplots(3,1, figsize=(24, 12))
 
 ax[0].plot(all_dates, ground_truth[:,1],marker="x",linestyle="none",c='g')
@@ -146,8 +182,8 @@ line3 = plt.Line2D([], [], color='black')           # Field Capacity
 line4 = plt.Line2D([], [], color='green')           # Saturation
 
 fig.legend([line1, line2, line3, line4],
-           ['Ground Truth', 'Wilting Point', 'Field Capacity', 'Saturation'],
-           loc='center left', bbox_to_anchor=(1.01, 0.5), fontsize=16)
+            ['Ground Truth', 'Wilting Point', 'Field Capacity', 'Saturation'],
+            loc='center left', bbox_to_anchor=(1.01, 0.5), fontsize=16)
 
 plt.tight_layout()
 plt.show()       
