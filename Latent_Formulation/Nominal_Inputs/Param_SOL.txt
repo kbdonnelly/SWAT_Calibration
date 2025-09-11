@@ -1,0 +1,7 @@
+ Crack volume potential of soil:22.533
+ Bulk Density Moist [g/cc]:        0.98        1.16        1.25        1.26        1.80        1.90
+ Ave. AW Incl. Rock Frag  :        0.21        0.21        0.26        0.28        0.12        0.30
+ Ksat. (est.)      [mm/hr]:       20.32       20.32       20.32       20.32       20.32        2.66
+ Clay           [weight %]:       27.38       26.65       31.42       34.32       35.00       33.00
+ Silt           [weight %]:       55.36       51.90       49.46       48.32       40.00       45.00
+ Sand           [weight %]:       17.27       21.45       19.11       17.35       25.00       22.00

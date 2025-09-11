@@ -1,0 +1,6 @@
+ .sdr file Watershed HRU:1 Subbasin:1 HRU:1 Luse:SOYB Soil: 2676641 Slope 0-9999 1/6/2024 12:00:00 AM ArcSWAT 2012.10_8.26
+     20.00    | RE: Effective radius of drains (mm)
+   9144.00    | SDRAIN: Distance bwtween two drain tubes or tiles (mm)
+     10.00    | DRAIN_CO: Drainage coefficient (mm/day)
+      0.00    | PC: Pump capacity (def pump cap - 1.042mm/hr or 25mm/day)
+     1.697    | LATKSATF: Multiplication factor to determine conk(j1,j) from sol_k(j1,k) for HRU

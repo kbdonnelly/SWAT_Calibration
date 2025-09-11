@@ -1,0 +1,1 @@
+    | CN2: Initial SCS CN II value

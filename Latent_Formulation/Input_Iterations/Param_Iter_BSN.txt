@@ -1,0 +1,9 @@
+    | SFTMP : Snowfall temperature
+    | SMTMP : Snow melt base temperature
+    | TIMP : Snow pack temperature lag factor
+    | SMFMX : Melt factor for snow on June 21
+    | SMFMN : Melt factor for snow on December 21
+    | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
+    | SNO50COV : Fraction of snow volume represented by SNOCOVMX that corresponds to 50% snow cover
+    | IWTDN: Water table depth algorithms flag
+    | SWATFT: Soil temperature module
