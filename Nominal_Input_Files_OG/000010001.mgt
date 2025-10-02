@@ -1,0 +1,98 @@
+ .mgt file Watershed HRU:1 Subbasin:1 HRU:1 Luse:SOYB Soil: 2676641 Slope: 0-9999 1/6/2024 12:00:00 AM ArcSWAT 2012.10_8.26
+               0    | NMGT:Management code
+Initial Plant Growth Parameters
+               0    | IGRO: Land cover status: 0-none growing; 1-growing
+               0    | PLANT_ID: Land cover ID number (IGRO = 1)
+            0.00    | LAI_INIT: Initial leaf are index (IGRO = 1)
+            0.00    | BIO_INIT: Initial biomass (kg/ha) (IGRO = 1)
+            0.00    | PHU_PLT: Number of heat units to bring plant to maturity (IGRO = 1)
+General Management Parameters
+           0.200    | BIOMIX: Biological mixing efficiency
+          91.425    | CN2: Initial SCS CN II value
+            1.00    | USLE_P: USLE support practice factor
+            0.00    | BIO_MIN: Minimum biomass for grazing (kg/ha)
+           0.000    | FILTERW: width of edge of field filter strip (m)
+Urban Management Parameters
+               0    | IURBAN: urban simulation code, 0-none, 1-USGS, 2-buildup/washoff
+               0    | URBLU: urban land type
+Irrigation Management Parameters
+               0    | IRRSC: irrigation code
+               0    | IRRNO: irrigation source location
+           0.000    | FLOWMIN: min in-stream flow for irr diversions (m^3/s)
+           0.000    | DIVMAX: max irrigation diversion from reach (+mm/-10^4m^3)
+           0.000    | FLOWFR: : fraction of flow allowed to be pulled for irr
+Tile Drain Management Parameters
+         900.000    | DDRAIN: depth to subsurface tile drain (mm)
+           0.000    | TDRAIN: time to drain soil to field capacity (hr)
+           0.000    | GDRAIN: drain tile lag time (hr)
+Management Operations:
+              11    | NROT: number of years of rotation
+Operation Schedule:
+ 06 06           1   56          1604.00000  
+ 10 24           7 
+                 0
+ 05 12           6   95          
+ 05 12           1   56          1604.00000   
+ 10 02           7
+ 11 09           3    1            16.1857    0.8
+ 11 09           3    2            33.4123    0.8
+ 11 09           3    1            19.6567    0.8
+                 0
+ 04 27           6   95
+ 04 28           1   19          1762.0
+ 04 28           3    1            29.9643    0.2
+ 04 28           3    1             1.9774    0.2
+ 06 10           3    1           178.7872    0.2
+ 09 28           7 
+                 0
+ 05 15           1   56          1604.00000  
+ 10 01           7 
+ 10 25           6   95
+                 0
+ 04 18           3    1             2.0839    0.2
+ 04 18           3    2             4.3019    0.2
+ 04 19           6   45
+ 05 19           1   19          1762.0
+ 05 19           3    1             5.6498    0.2
+ 05 19           3    2             6.3050    0.2
+ 05 19           3    1             6.4570    0.2
+ 05 19           3    2             9.3988    0.2
+ 05 19           3    1            10.3580    0.2
+ 06 12           3    1            47.0820    0.2
+ 11 27           7
+ 11 28           1   30          1456.0
+                 0
+ 05 01           8
+ 05 08           1   56          1604.00000   
+ 10 01           7
+ 10 24           3    1             2.2868    0.8
+ 10 24           3    2             7.6228    0.8
+ 10 25           6   95
+                 0
+ 06 06           1   56          1604.00000  
+ 10 24           7 
+                 0
+ 05 12           6   95          
+ 05 12           1   56          1604.00000       
+ 10 02           7
+ 11 09           3    1            16.1857    0.8
+ 11 09           3    2            33.4123    0.8
+ 11 09           3    1            19.6567    0.8
+                 0
+ 04 27           6   61
+ 04 28           1   19          1762.0
+ 04 28           3    1            29.9643    0.2
+ 04 28           3    1             1.9774    0.2
+ 06 10           3    1           178.7872    0.2
+ 09 28           7 
+                 0
+ 06 04           1   56          1604.00000
+ 10 24           7
+ 10 28           3    1             9.2482    0.8
+ 10 28           3    2            19.0913    0.8
+                 0
+ 04 26           1   19          1762.0
+ 06 10           3    1           166.4685    0.2
+ 11 08           7
+                 0
+

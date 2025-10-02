@@ -4,7 +4,7 @@ Wrapper for Executing SWAT+ Model
 
 Adapated from Jaya Hafner, Kalcic Lab @ UW Madison
 
-Last updated: 07/21/2025
+Last updated: 08/14/2025
 
 @author: kbdon
 """
@@ -38,7 +38,7 @@ class SWATrun:
         
         self.IWTDN = False
         self.SWATFT = False
-        self.exec_path = "swatftflag.exe" # Other option: "depimpchange.exe"
+        self.exec_path = "swatftflag.exe" # Options: "depimpchange.exe" or "swatftflag.exe"
         
         self.param_bsn = [("SFTMP.bsn", -3, 3),
                           ("SMTMP.bsn", -3, 3),
@@ -83,18 +83,18 @@ class SWATrun:
         ]
         
         # Nominal parameters path to search inputs files for:
-        self.BSN_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_BSN.txt"
-        self.HRU_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_HRU.txt"
-        self.MGT_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_MGT.txt"
-        self.SDR_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_SDR.txt"
-        self.SOL_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs\\Param_SOL.txt"
+        self.BSN_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs_OG\\Param_BSN.txt"
+        self.HRU_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs_OG\\Param_HRU.txt"
+        self.MGT_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs_OG\\Param_MGT.txt"
+        self.SDR_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs_OG\\Param_SDR.txt"
+        self.SOL_nom_path = "C:\\SWAT_Calibration\\Nominal_Inputs_OG\\Param_SOL.txt"
         
         # Parameter iteration files to add new thetas to:
-        self.BSN_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_BSN.txt"       
-        self.HRU_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_HRU.txt"
-        self.MGT_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_MGT.txt"
-        self.SDR_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_SDR.txt"
-        self.SOL_iter_path = "C:\\SWAT_Calibration\\Input_Iterations\\Param_Iter_SOL.txt"            
+        self.BSN_iter_path = "C:\\SWAT_Calibration\\Input_Iterations_OG\\Param_Iter_BSN.txt"       
+        self.HRU_iter_path = "C:\\SWAT_Calibration\\Input_Iterations_OG\\Param_Iter_HRU.txt"
+        self.MGT_iter_path = "C:\\SWAT_Calibration\\Input_Iterations_OG\\Param_Iter_MGT.txt"
+        self.SDR_iter_path = "C:\\SWAT_Calibration\\Input_Iterations_OG\\Param_Iter_SDR.txt"
+        self.SOL_iter_path = "C:\\SWAT_Calibration\\Input_Iterations_OG\\Param_Iter_SOL.txt"            
                 
         
     def __call__(self, theta):
@@ -104,7 +104,7 @@ class SWATrun:
         # BSN file:
         # Create input file with new BSN parameters:    
         bsn_name = 'basins'
-        DefaultPath_bsn = "C:\\SWAT_Calibration\\Nominal_Input_Files\\basins.bsn"
+        DefaultPath_bsn = "C:\\SWAT_Calibration\\Nominal_Input_Files_OG\\basins.bsn"
         InputPath_bsn = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + bsn_name + ".bsn"
         
         old_line_bsn = [None]*(len(self.param_bsn)+2)
@@ -155,7 +155,7 @@ class SWATrun:
         # HRU file:
         # Create input file with new HRU parameters:    
         hru_name = '000010001'
-        DefaultPath_hru = "C:\\SWAT_Calibration\\Nominal_Input_Files\\000010001.hru"
+        DefaultPath_hru = "C:\\SWAT_Calibration\\Nominal_Input_Files_OG\\000010001.hru"
         InputPath_hru = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + hru_name + ".hru"
         
         old_line_hru = [None]*len(self.param_hru)
@@ -182,7 +182,7 @@ class SWATrun:
         # MGT file:
         # Create input file with new MGT parameters:    
         mgt_name = '000010001'
-        DefaultPath_mgt = "C:\\SWAT_Calibration\\Nominal_Input_Files\\000010001.mgt"
+        DefaultPath_mgt = "C:\\SWAT_Calibration\\Nominal_Input_Files_OG\\000010001.mgt"
         InputPath_mgt = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + mgt_name + ".mgt"
         
         old_line_mgt = [None]*len(self.param_mgt)
@@ -209,7 +209,7 @@ class SWATrun:
         # SDR file:
         # Create input file with new SDR parameters:    
         sdr_name = '000010001'
-        DefaultPath_sdr = "C:\\SWAT_Calibration\\Nominal_Input_Files\\000010001.sdr"
+        DefaultPath_sdr = "C:\\SWAT_Calibration\\Nominal_Input_Files_OG\\000010001.sdr"
         InputPath_sdr = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + sdr_name + ".sdr"
         
         old_line_sdr = [None]*len(self.param_sdr)
@@ -239,7 +239,7 @@ class SWATrun:
         #######################################################################
         
         sol_name = '000010001'
-        DefaultPath_sol = "C:\\SWAT_Calibration\\Nominal_Input_Files\\000010001.sol"
+        DefaultPath_sol = "C:\\SWAT_Calibration\\Nominal_Input_Files_OG\\000010001.sol"
         InputPath_sol = "C:\\SWAT_Calibration\\Buckeye_TxtInOut\\" + sol_name + ".sol"
         
         theta_CRK = theta[len(self.param_bsn)+len(self.param_hru)+len(self.param_mgt)+len(self.param_sdr)].squeeze(0).tolist()
@@ -333,47 +333,54 @@ if __name__== '__main__':
         UB = a.UB
     
         theta_scaled = LB + (UB - LB)*theta
-        sensors = a(theta_scaled)
+        sensors1 = a(theta_scaled)
         
     if run_type == ['Input']:
-        
-        # Rescaling:
-        LB = a.LB
-        UB = a.UB
-        
-        # theta1 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
-        # output1 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
-        # theta1_best = theta1[torch.argmin(output1)].to(dtype=torch.float32).unsqueeze(1)
-        # output1_minaccum = np.minimum.accumulate(output1.numpy())
-        
-        # theta2 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
-        # output2 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
-        # theta2_best = theta2[torch.argmin(output2)].to(dtype=torch.float32).unsqueeze(1)
-        # output2_minaccum = np.minimum.accumulate(output2.numpy())
-        
-        # theta3 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
-        # output3 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
-        # theta3_best = theta3[torch.argmin(output3)].to(dtype=torch.float32).unsqueeze(1)
-        # output3_minaccum = np.minimum.accumulate(output3.numpy())
                
-        # # sensors1 = a(theta1_best)
-        # # sensors2 = a(theta2_best)
-        # sensors3 = a(theta3_best)
+        theta = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
+        output = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
+        theta_best = theta[torch.argmin(output)].to(dtype=torch.float32).unsqueeze(1)
+        output_minaccum = np.minimum.accumulate(output.numpy())
         
-        # df_theta3_sensors =  pd.DataFrame(sensors3)
-        # df_theta3_sensors.to_csv('df_theta3_sensors.csv', sep=',', index = False, encoding='utf-8')
+        sensors = a(theta_best)
         
-        # # sensors1_VWC20 = a.VWC20
-        # # sensors2_VWC20 = a.VWC20
-        # sensors3_VWC20 = a.VWC20
+        df_theta_sensors =  pd.DataFrame(sensors)
+        df_theta_sensors.to_csv('df_sensors_TuRBO1_IWTDN2_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
+
+        # sensors_cali = sensors[639:-1,:]
         
-        # sensors1 = torch.tensor(pd.read_csv('df_theta1_sensors.csv').to_numpy())
-        # sensors2 = torch.tensor(pd.read_csv('df_theta2_sensors.csv').to_numpy())
-        # sensors3 = torch.tensor(pd.read_csv('df_theta3_sensors.csv').to_numpy())
-                 
-        # sensors1_VWC20 = torch.tensor(pd.read_csv('sensor1_VWC20.csv').to_numpy())
-        # sensors2_VWC20 = torch.tensor(pd.read_csv('sensor2_VWC20.csv').to_numpy())
-        # sensors3_VWC20 = torch.tensor(pd.read_csv('sensor3_VWC20.csv').to_numpy())
+        # # Obtaining ground truth data from simulator:
+        # ground_truth = a.ground_truth[:,0:8]
+        # cali_range = ground_truth[639:-1,:]
+        # vali_range = ground_truth[0:639,:]
+         
+
+        
+        # df7 = pd.read_csv('bestnowtnotmp.csv')
+        # df8 = pd.read_csv('bestnowt.csv')
+        # df9 = pd.read_csv('bestall.csv')
+        # sensors7 = torch.tensor(df7.iloc[:,2:10].to_numpy())
+        # sensors8 = torch.tensor(df8.iloc[:,2:10].to_numpy())
+        # sensors9 = torch.tensor(df9.iloc[:,2:10].to_numpy())
+        
+        # # 2.2431, 5.9153, 5.7794
+        
+        # sensors_cali = sensors7[639:-1,:]
+        # output_RMSE = torch.zeros(sensors7.size(1))
+
+        # for i in range(sensors7.size(1)):
+            
+        #     # Creating a mask to account for NaNs in ground truth data for calculation:
+        #     mask = ~torch.isnan(cali_range[:, i])
+        #     valid_gt = cali_range[mask, i]
+        #     valid_pred = sensors_cali[mask, i]
+
+        #     # # Take only first 80% of valid data: 
+        #     # cutoff = int(0.8 * len(valid_gt))
+        #     # valid_gt = valid_gt[:cutoff]
+        #     # valid_pred = valid_pred[:cutoff]
+            
+        #     output_RMSE[i] = torch.sqrt(torch.mean((valid_pred - valid_gt)**2)) / torch.std(valid_gt)
                 
     if plotting == True:    
     
@@ -387,15 +394,15 @@ if __name__== '__main__':
         start_tr_date = datetime.date(2020,1,1)
         end_tr_date = datetime.date(2023,12,31)
         all_dates = [start_tr_date + datetime.timedelta(days=i) for i in range((end_tr_date - start_tr_date).days + 1)]
+        trts_split = datetime.date(2021,9,1)
         
-        # # Sensors 1 & 2:
+        # # Sensors 1:
 
         fig, ax = plt.subplots(figsize=(24,6))  
         
-        trts_split = all_dates[int(0.8*a.ground_truth[:,0].shape[0])]
         plt.plot(all_dates, sensors1[:,0], color='orange', lw=3)
-        plt.plot(all_dates, sensors2[:,0], color='b', lw=3)
-        plt.plot(all_dates, sensors3[:,0], color='r', lw=3,linestyle='--')
+        # plt.plot(all_dates, sensors2[:,0], color='b', lw=3)
+        # plt.plot(all_dates, sensors3[:,0], color='r', lw=3,linestyle='--')
         plt.plot(all_dates, a.ground_truth[:,0],marker="x",linestyle="none",c='g')
         plt.axvline(x=trts_split, color='black', linestyle='--', lw=3)
         plt.ylabel("Tile Flow (mm)", fontsize = 16)
@@ -410,10 +417,9 @@ if __name__== '__main__':
         # Sensors 7,8,9:
         fig, ax = plt.subplots(3,1, figsize=(24, 12))
         
-        trts_split = all_dates[int(0.8*a.ground_truth[:,2].shape[0])]
         ax[0].plot(all_dates, sensors1[:,1], color='orange', lw=3)
-        ax[0].plot(all_dates, sensors2[:,1], color='b', lw=3)
-        ax[0].plot(all_dates, sensors3[:,1], color='r', lw=3)
+        # ax[0].plot(all_dates, sensors2[:,1], color='b', lw=3)
+        # ax[0].plot(all_dates, sensors3[:,1], color='r', lw=3)
         ax[0].plot(all_dates, a.ground_truth[:,1],marker="x",linestyle="none",c='g')
         ax[0].axhline(y=a.wilting[0],color='red',xmin=0,xmax=1461)
         ax[0].axhline(y=a.field_cap[0],color='black',xmin=0,xmax=1461)
@@ -427,13 +433,14 @@ if __name__== '__main__':
         ax[0].grid(True)
         
         # VWC 20 CM FOR VALIDATION
-        ax[1].plot(all_dates, sensors1_VWC20, color='orange', lw=3)
-        ax[1].plot(all_dates, sensors2_VWC20, color='b', lw=3)
-        ax[1].plot(all_dates, sensors3_VWC20, color='r', lw=3)
-        ax[1].plot(all_dates, a.ground_truth[:,10],marker="x",linestyle="none",c='g')
+        ax[1].plot(all_dates, sensors1[:,2], color='orange', lw=3)
+        # ax[1].plot(all_dates, sensors2[:,2], color='b', lw=3)
+        # ax[1].plot(all_dates, sensors3[:,2], color='r', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,2],marker="x",linestyle="none",c='g')
         ax[1].axhline(y=a.wilting[1],color='red',xmin=0,xmax=1461)
         ax[1].axhline(y=a.field_cap[1],color='black',xmin=0,xmax=1461)
         ax[1].axhline(y=a.sat[1],color='green',xmin=0,xmax=1461)
+        ax[1].axvline(x=trts_split, color='black', linestyle='--', lw=3)
         ax[1].set_ylabel("VWC - 20 cm", fontsize = 16)
         ax[1].set_xlabel("Date", fontsize = 16)
         ax[1].set_xlim(start_tr_date, end_tr_date)
@@ -441,11 +448,10 @@ if __name__== '__main__':
         ax[1].tick_params(axis='both', labelsize=16)
         ax[1].grid(True)
         
-        trts_split = all_dates[int(0.8*a.ground_truth[:,3].shape[0])]
-        ax[2].plot(all_dates, sensors1[:,2], color='orange', lw=3)
-        ax[2].plot(all_dates, sensors2[:,2], color='b', lw=3)
-        ax[2].plot(all_dates, sensors3[:,2], color='r', lw=3)
-        ax[2].plot(all_dates, a.ground_truth[:,2],marker="x",linestyle="none",c='g')
+        ax[2].plot(all_dates, sensors1[:,3], color='orange', lw=3)
+        # ax[2].plot(all_dates, sensors2[:,3], color='b', lw=3)
+        # ax[2].plot(all_dates, sensors3[:,3], color='r', lw=3)
+        ax[2].plot(all_dates, a.ground_truth[:,3],marker="x",linestyle="none",c='g')
         ax[2].axhline(y=a.wilting[2],color='red',xmin=0,xmax=1461)
         ax[2].axhline(y=a.field_cap[2],color='black',xmin=0,xmax=1461)
         ax[2].axhline(y=a.sat[2],color='green',xmin=0,xmax=1461)
@@ -459,63 +465,66 @@ if __name__== '__main__':
         
         handles, labels = ax[0].get_legend_handles_labels()
         line1, = ax[0].plot([], [], color='orange', lw=3)              # TuRBO
-        line2, = ax[0].plot([], [], color='b', lw=3)              # TuRBO
-        line3, = ax[0].plot([], [], color='r', lw=3)              # TuRBO
+        # line2, = ax[0].plot([], [], color='b', lw=3)              # TuRBO
+        # line3, = ax[0].plot([], [], color='r', lw=3)              # TuRBO
         line4, = ax[0].plot([], [], marker="x", linestyle="none", color='g')  # Ground Truth
         line5 = plt.Line2D([], [], color='red')             # Wilting Point
         line6 = plt.Line2D([], [], color='black')           # Field Capacity
         line7 = plt.Line2D([], [], color='green')           # Saturation
         line8 = plt.Line2D([], [], color='black', linestyle='--')
         
-        fig.legend([line1, line2, line3, line4, line5, line6, line7, line8],
-                    ['TuRBO-1: No Improvement','TuRBO-1: TMP','TuRBO-1: TMP & WTBL', 'Ground Truth', 'Wilting Point', 'Field Capacity', 'Saturation','Train/Test Split'],
+        fig.legend([line1,line4, line5, line6, line7, line8],
+                    ['TuRBO-1: No Improvement','Ground Truth', 'Wilting Point', 'Field Capacity', 'Saturation','Train/Test Split'],
                     loc='center left', bbox_to_anchor=(1.01, 0.5), fontsize=16)
         
         plt.tight_layout()
         plt.show()
         
         
-        # # Sensors 10,11,12:
-        # fig, ax = plt.subplots(3,1, figsize=(24, 12))
+        # Sensors 10,11,12:
+        fig, ax = plt.subplots(3,1, figsize=(24, 12))
         
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,4].shape[0])]
-        # ax[0].plot(all_dates, sensors3[:,3], color='r', lw=3)
-        # ax[0].plot(all_dates, a.ground_truth[:,3],marker="x",linestyle="none",c='g')
-        # ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        # ax[0].set_ylabel("TMP - 10 cm", fontsize = 16)
-        # ax[0].set_xlabel("Date", fontsize = 16)
-        # ax[0].set_xlim(start_tr_date, end_tr_date)
-        # ax[0].set_ylim([-10,35])
-        # ax[0].legend(['TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[0].tick_params(axis='both', labelsize=16)
-        # ax[0].grid(True)
+        ax[0].plot(all_dates, sensors1[:,4], color='orange', lw=3)
+        # ax[0].plot(all_dates, sensors2[:,4], color='b', lw=3)
+        # ax[0].plot(all_dates, sensors3[:,4], color='r', lw=3)
+        ax[0].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
+        ax[0].axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        ax[0].set_ylabel("TMP - 10 cm", fontsize = 16)
+        ax[0].set_xlabel("Date", fontsize = 16)
+        ax[0].set_xlim(start_tr_date, end_tr_date)
+        ax[0].set_ylim([-10,35])
+        ax[0].legend(['TuRBO-1: No Improvement','TuRBO-1: TMP','TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].grid(True)
         
-        # # TMP 20 CM FOR VALIDATION
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,11].shape[0])]
-        # ax[1].plot(all_dates, a.STMP20, color='r', lw=3)
-        # ax[1].plot(all_dates, a.ground_truth[:,11],marker="x",linestyle="none",c='g')
-        # ax[1].set_ylabel("TMP - 20 cm", fontsize = 16)
-        # ax[1].set_xlabel("Date", fontsize = 16)
-        # ax[1].set_xlim(start_tr_date, end_tr_date)
-        # ax[1].set_ylim([-5,35])
-        # ax[1].legend(['TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[1].tick_params(axis='both', labelsize=16)
-        # ax[1].grid(True)
+        ax[1].plot(all_dates, sensors1[:,5], color='orange', lw=3)
+        # ax[1].plot(all_dates, sensors2[:,5], color='b', lw=3)
+        # ax[1].plot(all_dates, sensors3[:,5], color='r', lw=3)
+        ax[1].plot(all_dates, a.ground_truth[:,5],marker="x",linestyle="none",c='g')
+        ax[1].axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        ax[1].set_ylabel("TMP - 10 cm", fontsize = 16)
+        ax[1].set_xlabel("Date", fontsize = 16)
+        ax[1].set_xlim(start_tr_date, end_tr_date)
+        ax[1].set_ylim([-10,35])
+        ax[1].legend(['TuRBO-1: No Improvement','TuRBO-1: TMP','TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
+        ax[1].tick_params(axis='both', labelsize=16)
+        ax[1].grid(True)
         
-        # trts_split = all_dates[int(0.8*a.ground_truth[:,5].shape[0])]
-        # ax[2].plot(all_dates, sensors3[:,4], color='r', lw=3)
-        # ax[2].plot(all_dates, a.ground_truth[:,4],marker="x",linestyle="none",c='g')
-        # ax[2].axvline(x=trts_split, color='black', linestyle='--', lw=3)
-        # ax[2].set_ylabel("TMP - 50 cm", fontsize = 16)
-        # ax[2].set_xlabel("Date", fontsize = 16)
-        # ax[2].set_xlim(start_tr_date, end_tr_date)
-        # ax[2].set_ylim([-5,35])
-        # ax[2].legend(['TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
-        # ax[2].tick_params(axis='both', labelsize=16)
-        # ax[2].grid(True)
+        ax[2].plot(all_dates, sensors1[:,6], color='orange', lw=3)
+        # ax[2].plot(all_dates, sensors2[:,6], color='b', lw=3)
+        # ax[2].plot(all_dates, sensors3[:,6], color='r', lw=3)
+        ax[2].plot(all_dates, a.ground_truth[:,6],marker="x",linestyle="none",c='g')
+        ax[2].axvline(x=trts_split, color='black', linestyle='--', lw=3)
+        ax[2].set_ylabel("TMP - 10 cm", fontsize = 16)
+        ax[2].set_xlabel("Date", fontsize = 16)
+        ax[2].set_xlim(start_tr_date, end_tr_date)
+        ax[2].set_ylim([-10,35])
+        ax[2].legend(['TuRBO-1: No Improvement','TuRBO-1: TMP','TuRBO-1: TMP & WTBL','Ground Truth','Train/Test Split'],loc='upper center',fontsize=16, ncol=3) 
+        ax[2].tick_params(axis='both', labelsize=16)
+        ax[2].grid(True)
         
-        # plt.tight_layout()
-        # plt.show()
+        plt.tight_layout()
+        plt.show()
     
         # Sensor 13:
         
@@ -525,11 +534,10 @@ if __name__== '__main__':
         fig, ax1 = plt.subplots(figsize=(24, 6))
         ax2 = ax1.twinx()
         
-        trts_split = all_dates[int(0.8*a.ground_truth[:,5].shape[0])+50]
-        ax1.plot(all_dates[731:1461], sensors1[:,5][731:1461], color='orange', lw=3)
-        ax1.plot(all_dates[731:1461], sensors2[:,5][731:1461], color='b', lw=3)
-        ax1.plot(all_dates[731:1461], sensors3[:,5][731:1461], color='r', lw=3,linestyle="--")
-        ax1.plot(all_dates[731:1461], a.ground_truth[:,5][731:1461],marker="x",linestyle="none",c='g')
+        ax1.plot(all_dates[731:1461], sensors1[:,7][731:1461], color='orange', lw=3)
+        # ax1.plot(all_dates[731:1461], sensors2[:,7][731:1461], color='b', lw=3)
+        # ax1.plot(all_dates[731:1461], sensors3[:,7][731:1461], color='r', lw=3,linestyle="--")
+        ax1.plot(all_dates[731:1461], a.ground_truth[:,7][731:1461],marker="x",linestyle="none",c='g')
         ax1.axvline(x=trts_split, color='black', linestyle='--', lw=3)
         
         ax2.plot(all_dates[731:1461],precip[730:1461], color='k',lw=2)
@@ -542,6 +550,7 @@ if __name__== '__main__':
         ax2.legend(['Prec.'],loc='lower left',fontsize=16)
         plt.xticks(fontsize=16)
         plt.yticks(fontsize=16)
+        # plt.xlim(start_tr_date, end_tr_date)
         plt.ylim([0,1800])
         ax1.invert_yaxis()
         plt.grid(True)

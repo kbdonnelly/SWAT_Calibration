@@ -1,0 +1,1 @@
+    | LATKSATF: Multiplication factor to determine
