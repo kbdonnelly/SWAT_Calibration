@@ -61,6 +61,7 @@ class Turbo1:
         min_cuda=1024,
         device="cpu",
         dtype="float64",
+        seed=0
     ):
 
         # Very basic input checks
@@ -80,6 +81,7 @@ class Turbo1:
             assert torch.cuda.is_available(), "can't use cuda if it's not available"
 
         # Save function information
+        self.seed = seed
         self.f = f
         self.dim = len(lb)
         self.lb = lb
@@ -185,7 +187,7 @@ class Turbo1:
         ub = np.clip(x_center + weights * length / 2.0, 0.0, 1.0)
 
         # Draw a Sobolev sequence in [lb, ub]
-        seed = np.random.randint(int(1e6))
+        seed = self.seed
         sobol = SobolEngine(self.dim, scramble=True, seed=seed)
         pert = sobol.draw(self.n_cand).to(dtype=dtype, device=device).cpu().detach().numpy()
         pert = lb + (ub - lb) * pert
@@ -246,7 +248,7 @@ class Turbo1:
             # Generate and evalute initial design points
             X_init = latin_hypercube(self.n_init, self.dim)
             X_init = from_unit_cube(X_init, self.lb, self.ub)
-            fX_init = np.array([[self.f(x)] for x in X_init])
+            fX_init = np.array([[torch.sum(self.f(x))] for x in X_init])
 
             # Update budget and set as initial data for this TR
             self.n_evals += self.n_init
@@ -280,7 +282,7 @@ class Turbo1:
                 X_next = from_unit_cube(X_next, self.lb, self.ub)
 
                 # Evaluate batch
-                fX_next = np.array([[self.f(x)] for x in X_next])
+                fX_next = np.array([[torch.sum(self.f(x),dim=0)] for x in X_next])  # Kevin here
 
                 # Update trust region
                 self._adjust_length(fX_next)
