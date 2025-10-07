@@ -9,7 +9,7 @@ Last updated: 08/14/2025
 import sys
 import torch
 from torch import Tensor
-from SWATrun import SWATrun
+from SWATrun_latent import SWATrun
 from scipy.stats import qmc
 import pandas as pd
 import numpy as np
@@ -135,40 +135,42 @@ if __name__== '__main__':
         
     if run_type == ['Input']:
         
-        # TuRBO Runs, No Texture Parameters:
-        
-        theta1 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
-        output1 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
-        theta_best1 = theta1[torch.argmin(output1)].to(dtype=torch.float32).unsqueeze(1)
-        output_minaccum1 = np.minimum.accumulate(output1.numpy())
-        
-        theta2 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
-        output2 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
-        theta_best2 = theta2[torch.argmin(output2)].to(dtype=torch.float32).unsqueeze(1)
-        output_minaccum2 = np.minimum.accumulate(output2.numpy())
-        
-        theta3 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
-        output3 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
-        theta_best3 = theta3[torch.argmin(output3)].to(dtype=torch.float32).unsqueeze(1)
-        output_minaccum3 = np.minimum.accumulate(output3.numpy())
-        
-        theta10 = torch.tensor(pd.read_csv('df_theta_TuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
-        output10 = torch.tensor(pd.read_csv('df_output_TuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
-        theta_best10 = theta10[torch.argmin(output10)].to(dtype=torch.float32).unsqueeze(1)
-        output_minaccum10 = np.minimum.accumulate(output10.numpy())
-        
-        # Run to obtain NRMSE scores for each sensor:
-        outputs = f(theta_best3)    
+        # Latent Box TuRBO Runs, Texture Parameters included:
             
-        
- 
+        theta4 = torch.tensor(pd.read_csv('df_theta_LatTuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        output4 = torch.tensor(pd.read_csv('df_output_LatTuRBO1_IWTDN1_SWATFT0.csv').to_numpy())
+        theta_best4 = theta4[torch.argmin(output4)].to(dtype=torch.float32).unsqueeze(1)
+        output_minaccum4 = np.minimum.accumulate(output4.numpy())
+        sensors4 = torch.tensor(pd.read_csv('df_sensors_LatTuRBO1_IWTDN1_SWATFT0.csv').to_numpy())    
+
+        theta5 = torch.tensor(pd.read_csv('df_theta_LatTuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        output5 = torch.tensor(pd.read_csv('df_output_LatTuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+        theta_best5 = theta5[torch.argmin(output5)].to(dtype=torch.float32).unsqueeze(1)
+        output_minaccum5 = np.minimum.accumulate(output5.numpy())
+        sensors5 = torch.tensor(pd.read_csv('df_sensors_LatTuRBO1_IWTDN1_SWATFT1.csv').to_numpy())
+            
+        theta6 = torch.tensor(pd.read_csv('df_theta_LatTuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        output6 = torch.tensor(pd.read_csv('df_output_LatTuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+        theta_best6 = theta6[torch.argmin(output6)].to(dtype=torch.float32).unsqueeze(1)
+        output_minaccum6 = np.minimum.accumulate(output6.numpy())
+        sensors6 = torch.tensor(pd.read_csv('df_sensors_LatTuRBO1_IWTDN2_SWATFT1.csv').to_numpy())
+
+        theta11 = torch.tensor(pd.read_csv('df_theta_LatTuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
+        output11 = torch.tensor(pd.read_csv('df_output_LatTuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
+        theta_best11 = theta11[torch.argmin(output11)].to(dtype=torch.float32).unsqueeze(1)
+        output_minaccum11 = np.minimum.accumulate(output11.numpy())
+        sensors11 = torch.tensor(pd.read_csv('df_sensors_LatTuRBO1_IWTDN2_SWATFT0.csv').to_numpy())
+            
+        # Run to obtain NRMSE scores for each sensor:
+        outputs = f(theta_best6.squeeze(1))
+         
     if run_type == ['TuRBO-1']:
                
         f = ObjFunc()
         turbo1 = Turbo1(
              f = f,  # Handle to objective function
-             lb = np.array(f.LB),  # Numpy array specifying lower bounds
-             ub = np.array(f.UB),  # Numpy array specifying upper bounds
+             lb = np.zeros(len(f.LB)),  # Numpy array specifying lower bounds
+             ub = np.ones(len(f.LB)),  # Numpy array specifying upper bounds
              n_init = 2*dim,  # Number of initial bounds from an Latin hypercube design
              max_evals = 2000,  # Maximum number of evaluations
              batch_size = 10,  # How large batch size TuRBO uses
@@ -179,7 +181,6 @@ if __name__== '__main__':
              min_cuda = 1024,  # Run on the CPU for small datasets
              device = "cpu",  # "cpu" or "cuda"
              dtype = "float64",  # float64 or float32
-             seed=seed
          )
         turbo1.optimize()
         
@@ -191,10 +192,10 @@ if __name__== '__main__':
         print("Best value found:\n\tf(x) = %.3f\nObserved at:\n\tx = %s" % (f_best, np.around(x_best, 3)))
         
         df_theta_TuRBO1 =  pd.DataFrame(X)
-        df_theta_TuRBO1.to_csv('df_theta_TuRBO1_IWTDN0_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
+        df_theta_TuRBO1.to_csv('df_theta_LatTuRBO1_IWTDN2_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
         
         df_output_TuRBO1 =  pd.DataFrame(fX)
-        df_output_TuRBO1.to_csv('df_output_TuRBO1_IWTDN0_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
+        df_output_TuRBO1.to_csv('df_output_LatTuRBO1_IWTDN2_SWATFT0.csv', sep=',', index = False, encoding='utf-8')
 
     if plotting == True:
 
